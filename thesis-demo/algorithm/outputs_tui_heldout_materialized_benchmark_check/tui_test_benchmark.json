@@ -1,0 +1,52 @@
+{
+  "lossless_compatible": true,
+  "evaluated_voxels": 65,
+  "total_voxels": 136148205,
+  "average_nll_bits": 0.9597255206422959,
+  "perplexity": 1.9449398258872124,
+  "ideal_code_length_bits": 62.38215884174923,
+  "proxy_size_bytes": 16333114,
+  "argmax_error_rate": 0.23076923076923073,
+  "accuracy_top1": 0.7692307692307693,
+  "accuracy_top5": 1.0,
+  "split": "test",
+  "feature_mode": "diagonal_causal_edge",
+  "target_mode": "residual",
+  "benchmark_sample_count": 65,
+  "checkpoint_path": "E:\\code\\thesis\\20260420\\outputs_tui_heldout_materialized\\stage4\\causal\\checkpoint.pt",
+  "allocation": [
+    {
+      "segment_id": "b0000_s3751_3927_x756_3072_test_s3913_3927",
+      "split": "test",
+      "shape": [
+        15,
+        2317,
+        1501
+      ],
+      "voxel_count": 52167255,
+      "sample_count": 25
+    },
+    {
+      "segment_id": "b0005_s3952_4104_x890_3228_test_s4090_4104",
+      "split": "test",
+      "shape": [
+        15,
+        2339,
+        1501
+      ],
+      "voxel_count": 52662585,
+      "sample_count": 25
+    },
+    {
+      "segment_id": "b0015_s4144_4302_x890_2280_test_s4288_4302",
+      "split": "test",
+      "shape": [
+        15,
+        1391,
+        1501
+      ],
+      "voxel_count": 31318365,
+      "sample_count": 15
+    }
+  ]
+}

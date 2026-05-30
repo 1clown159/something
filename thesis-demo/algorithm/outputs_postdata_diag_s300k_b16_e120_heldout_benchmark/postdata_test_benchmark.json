@@ -1,0 +1,35 @@
+{
+  "lossless_compatible": true,
+  "evaluated_voxels": 50000,
+  "total_voxels": 30015000,
+  "average_nll_bits": 1.2302240071778299,
+  "perplexity": 2.3460341387739745,
+  "ideal_code_length_bits": 61511.200358891496,
+  "proxy_size_bytes": 4615647,
+  "argmax_error_rate": 0.32762,
+  "accuracy_top1": 0.67238,
+  "accuracy_top5": 0.97848,
+  "interpretation": "sampled exponent NLL estimate, not a real range-coded bitstream",
+  "split": "test",
+  "feature_mode": "diagonal_causal_edge",
+  "target_mode": "residual",
+  "benchmark_sample_count": 50000,
+  "checkpoint_path": "E:\\code\\thesis\\20260420\\postdata\\outputs_postdata_diag_s300k_b16_e120_heldout\\stage4\\causal\\checkpoint.pt",
+  "allocation": [
+    {
+      "segment_id": "b0000_p0000_0349_t0000_0599_test_p0325_0349",
+      "split": "test",
+      "profile_range": [
+        325,
+        349
+      ],
+      "shape": [
+        25,
+        600,
+        2001
+      ],
+      "voxel_count": 30015000,
+      "sample_count": 50000
+    }
+  ]
+}

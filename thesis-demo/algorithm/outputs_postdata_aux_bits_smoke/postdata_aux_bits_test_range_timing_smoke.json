@@ -1,0 +1,125 @@
+{
+  "value_count": 1024,
+  "raw_float32_bytes": 4096,
+  "settings": {
+    "zstd_level": 9,
+    "zstd_threads": 0,
+    "sign_rle_level": 3,
+    "lzma_preset": 6,
+    "chunk_values": 8000000,
+    "limit_blocks": 0,
+    "limit_values": 1024,
+    "skip_bitshuffle": true,
+    "bitshuffle_mode": "auto",
+    "keep_temp": false,
+    "profile_range": [
+      325,
+      349
+    ]
+  },
+  "sign": {
+    "best_bytes": 85,
+    "best_method": "rle_lengths+zstd",
+    "best_seconds": 4.069999704370275e-05,
+    "candidates": {
+      "bitpack+zstd": 105,
+      "bitpack+lzma": 172,
+      "rle_lengths+zstd": 85,
+      "rle_lengths+lzma": 140,
+      "rle_deltas+zstd": 128,
+      "rle_deltas+lzma": 200
+    },
+    "candidate_seconds": {
+      "bitpack+zstd": 6.500000017695129e-05,
+      "bitpack+lzma": 7.790000017848797e-05,
+      "rle_lengths+zstd": 4.069999704370275e-05,
+      "rle_lengths+lzma": 5.869999949936755e-05,
+      "rle_deltas+zstd": 2.399999721092172e-05,
+      "rle_deltas+lzma": 6.679999933112413e-05
+    },
+    "rle": {
+      "run_count": 93,
+      "max_run": 117,
+      "first_run_length": 117,
+      "length_dtype": "uint8"
+    }
+  },
+  "mantissa": {
+    "whole_zstd_bytes": 2747,
+    "whole_zstd_seconds": 6.659999780822545e-05,
+    "whole_zstd_method": "mantissa23_packed+zstd",
+    "pathL_lite_bytes": 2700,
+    "pathL_lite_seconds": 8.340000204043463e-05,
+    "pathL_lite_method": "mid15_bytesplit_zstd + hi4lo4_raw_zstd",
+    "pathL_lite_detail": {
+      "mid_bytes": 1772,
+      "mid_method": "mid15_bytesplit_zstd",
+      "mid_seconds": 5.450000389828347e-05,
+      "mid_candidates": {
+        "mid15_raw_u16_zstd": 1838,
+        "mid15_bytesplit_zstd": 1772
+      },
+      "mid_candidate_seconds": {
+        "mid15_raw_u16_zstd": 5.199999941396527e-05,
+        "mid15_bytesplit_zstd": 5.450000389828347e-05
+      },
+      "side_bytes": 928,
+      "side_method": "hi4lo4_raw_zstd",
+      "side_seconds": 2.8899998142151162e-05,
+      "side_candidates": {
+        "hi4lo4_raw_zstd": 928
+      },
+      "side_candidate_seconds": {
+        "hi4lo4_raw_zstd": 2.8899998142151162e-05
+      }
+    }
+  },
+  "timing": {
+    "pass1_wall_seconds": 0.005034100002376363,
+    "pass1_compressor_seconds": 0.0003448999996180646,
+    "pass1_preprocess_overhead_seconds": 0.004689200002758298,
+    "pass2_wall_seconds": 0.00834229999964009,
+    "pass2_compressor_seconds": 0.00019019999308511615,
+    "pass2_preprocess_overhead_seconds": 0.008152100006554974
+  },
+  "combined_schemes": [
+    {
+      "scheme": "PostData predicted exp + sign-best + PathL-lite",
+      "sign_bytes": 85,
+      "sign_method": "rle_lengths+zstd",
+      "sign_seconds": 4.069999704370275e-05,
+      "exp_bytes": 4678499.0,
+      "exp_source": "provided_exp_bytes",
+      "exp_seconds": null,
+      "mant_bytes": 2700,
+      "mant_method": "mid15_bytesplit_zstd + hi4lo4_raw_zstd",
+      "mant_seconds": 8.340000204043463e-05,
+      "total_bytes": 4681284.0,
+      "aux_seconds": 0.00012409999908413738,
+      "total_seconds": null,
+      "bits_per_value": 36572.53125,
+      "compression_ratio_vs_float32": 0.0008749736183491538,
+      "space_saving_ratio": -1141.8916015625,
+      "exponent_method": "actual global_diag range-coded exponent bitstream"
+    },
+    {
+      "scheme": "PostData predicted exp + sign-best + mantissa-whole-zstd",
+      "sign_bytes": 85,
+      "sign_method": "rle_lengths+zstd",
+      "sign_seconds": 4.069999704370275e-05,
+      "exp_bytes": 4678499.0,
+      "exp_source": "provided_exp_bytes",
+      "exp_seconds": null,
+      "mant_bytes": 2747,
+      "mant_method": "mantissa23_packed+zstd",
+      "mant_seconds": 6.659999780822545e-05,
+      "total_bytes": 4681331.0,
+      "aux_seconds": 0.0001072999948519282,
+      "total_seconds": null,
+      "bits_per_value": 36572.8984375,
+      "compression_ratio_vs_float32": 0.0008749648337192991,
+      "space_saving_ratio": -1141.903076171875,
+      "exponent_method": "actual global_diag range-coded exponent bitstream"
+    }
+  ]
+}

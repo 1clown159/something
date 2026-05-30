@@ -1,0 +1,86 @@
+{
+  "manifest": "E:\\code\\thesis\\20260420\\postdata\\postdata_blocks_manifest.json",
+  "checkpoint_path": "E:\\code\\thesis\\20260420\\postdata\\outputs_postdata_diag_s300k_b16_e120_heldout\\stage4\\causal\\checkpoint.pt",
+  "split_mode": "heldout",
+  "roundtrip_split": "test",
+  "codec_layout": "global_diag",
+  "encode_only": true,
+  "verified": false,
+  "limits": {
+    "limit_profiles": 1,
+    "limit_traces": 4,
+    "limit_samples": 5
+  },
+  "segment_count": 1,
+  "ok": null,
+  "total_encoded_bytes": 437,
+  "total_voxels": 20,
+  "bits_per_voxel": 174.8,
+  "results": [
+    {
+      "segment": {
+        "segment_id": "b0000_p0000_0349_t0000_0599_test_p0315_0349",
+        "split": "test",
+        "block_id": "b0000_p0000_0349_t0000_0599",
+        "local_profile_start": 315,
+        "profiles": 35,
+        "profile_start": 315,
+        "profile_end": 349,
+        "shape": [
+          35,
+          600,
+          2001
+        ],
+        "dat_path": "E:\\code\\thesis\\experiments\\dat\\PostData-for-training.sgy.dat",
+        "byte_offset": 0,
+        "block_shape": [
+          350,
+          600,
+          2001
+        ]
+      },
+      "ok": null,
+      "verified": false,
+      "shape": [
+        1,
+        4,
+        5
+      ],
+      "source_segment_shape": [
+        35,
+        600,
+        2001
+      ],
+      "encoded_bytes": 437,
+      "bits_per_voxel": 174.8,
+      "encode": {
+        "bitstream_path": "E:\\code\\thesis\\20260420\\postdata\\outputs_postdata_encode_only_smoke\\postdata_test_global_diag_bitstreams\\0000_b0000_p0000_0349_t0000_0599_test_p0315_0349.s4rc",
+        "payload_bytes": 2,
+        "header_bytes": 435,
+        "total_bytes": 437,
+        "bits_per_voxel": 174.8,
+        "bits_per_modeled_voxel": 174.8,
+        "bits_per_total_voxel": 174.8,
+        "feature_mode": "diagonal_causal_edge",
+        "target_mode": "residual",
+        "codec_layout": "global_diag",
+        "encode_schedule": "profile_global_diagonal_batch",
+        "timing": {
+          "patch_build_seconds": 0.0,
+          "model_inference_seconds": 0.0,
+          "cdf_quantization_seconds": 0.0,
+          "range_coder_seconds": 0.0,
+          "total_wall_seconds": 0.4158013000014762,
+          "voxel_count": 0.0,
+          "inference_batch": 16.0,
+          "seconds_per_voxel": 0.0,
+          "patch_build_us_per_voxel": 0.0,
+          "model_inference_us_per_voxel": 0.0,
+          "cdf_quantization_us_per_voxel": 0.0,
+          "range_coder_us_per_voxel": 0.0,
+          "other_overhead_seconds": 0.4158013000014762
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>通用压缩 | Stage4</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/variables.css?v=2">
+    <link rel="stylesheet" href="css/layout.css?v=2">
+    <link rel="stylesheet" href="css/components.css?v=2">
+    <link rel="stylesheet" href="css/general-compress.css?v=2">
+</head>
+<body>
+    <div class="bg-animation">
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+        <div class="gradient-orb orb-3"></div>
+    </div>
+
+    <nav class="top-nav">
+        <div class="nav-brand">
+            <div class="logo">
+                <a href="index.html" style="display:flex;align-items:center;gap:var(--spacing-xs);text-decoration:none;color:inherit;">
+                    <span class="logo-icon">◈</span>
+                    <span class="logo-text">Stage4</span>
+                </a>
+            </div>
+            <span class="nav-tagline">通用压缩</span>
+        </div>
+        <div class="nav-links">
+            <a href="index.html" class="nav-link">首页</a>
+            <a href="compress.html" class="nav-link">压缩工具</a>
+            <a href="demo.html" class="nav-link">算法演示</a>
+            <a href="sgy-viewer.html" class="nav-link">SEG-Y 查看</a>
+        </div>
+    </nav>
+
+    <main class="gc-main">
+        <header class="section-header">
+            <h1 class="section-title">通用数据压缩</h1>
+            <p class="section-desc">对比四种经典压缩算法在不同数据类型上的表现</p>
+        </header>
+
+        <!-- Algorithm Selection -->
+        <section class="gc-algo-section">
+            <div class="gc-algo-grid" id="algoGrid">
+                <div class="gc-algo-card selected" data-algo="lz77">
+                    <span class="gc-algo-badge">🔧</span>
+                    <div class="gc-algo-name">LZ77 + Huffman</div>
+                    <span class="gc-algo-type">字典+熵编码</span>
+                    <p class="gc-algo-desc">滑动窗口字典编码与熵编码的经典组合，gzip/zip 核心</p>
+                </div>
+                <div class="gc-algo-card" data-algo="rle">
+                    <span class="gc-algo-badge">📊</span>
+                    <div class="gc-algo-name">RLE 行程编码</div>
+                    <span class="gc-algo-type">行程编码</span>
+                    <p class="gc-algo-desc">记录连续重复数据实现压缩，适合图像和重复模式</p>
+                </div>
+                <div class="gc-algo-card" data-algo="deflate">
+                    <span class="gc-algo-badge">⚡</span>
+                    <div class="gc-algo-name">Deflate</div>
+                    <span class="gc-algo-type">标准库</span>
+                    <p class="gc-algo-desc">Python zlib 实现，PNG/ZIP/gzip 标准压缩算法</p>
+                </div>
+                <div class="gc-algo-card" data-algo="neural">
+                    <span class="gc-algo-badge">🧠</span>
+                    <div class="gc-algo-name">Neural Predictor</div>
+                    <span class="gc-algo-type">深度学习</span>
+                    <p class="gc-algo-desc">MLP神经网络预测编码，学习数据模式预测下一字节</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Mode Switch -->
+        <nav class="gc-mode-switch">
+            <button class="gc-mode-btn active" data-mode="text">文本对比</button>
+            <button class="gc-mode-btn" data-mode="file">文件压缩</button>
+        </nav>
+
+        <!-- Text Demo Mode -->
+        <section id="textMode" class="mode-panel">
+            <div class="gc-panel">
+                <h2>🔬 算法对比测试</h2>
+                <p style="color:var(--text-secondary);font-size:0.875rem;margin-bottom:var(--spacing-md);">
+                    输入文本内容，同时对比四种算法的压缩效果。观察传统算法与深度学习方法在不同数据特征下的表现差异。
+                </p>
+                <textarea class="gc-textarea" id="demoInput" placeholder="在此输入要压缩的文本...
+
+测试建议：
+· 重复文本：AAAAABBBBBCCCCCDDDDD（RLE擅长）
+· 模式重复：XYZXYZXYZXYZXYZ（LZ77擅长）
+· 自然语言：英文段落或中文文章（Deflate擅长）
+· 有规律数据：12345678901234567890（Neural擅长）"></textarea>
+
+                <div class="action-bar" style="display:flex;gap:12px;margin-top:var(--spacing-md);">
+                    <button class="btn btn-primary" id="runDemoBtn">▶ 执行对比测试</button>
+                    <button class="btn btn-ghost" id="clearDemoBtn">🔄 清空</button>
+                </div>
+            </div>
+
+            <div class="gc-panel hidden" id="demoResultsPanel">
+                <h2>📈 算法对比结果</h2>
+
+                <div class="gc-compare">
+                    <h4>压缩后大小可视化对比（相对于原始数据）</h4>
+                    <div class="gc-size-row">
+                        <span class="gc-size-label">📦 原始数据</span>
+                        <div class="gc-size-track"><div class="gc-size-fill orig" id="origBar" style="width:100%">100%</div></div>
+                        <span class="gc-size-val" id="origBarVal">-</span>
+                    </div>
+                    <div class="gc-size-row">
+                        <span class="gc-size-label">🔧 LZ77+Huffman</span>
+                        <div class="gc-size-track"><div class="gc-size-fill lz77" id="lz77Bar" style="width:0%"></div></div>
+                        <span class="gc-size-val" id="lz77BarVal">-</span>
+                    </div>
+                    <div class="gc-size-row">
+                        <span class="gc-size-label">📊 RLE</span>
+                        <div class="gc-size-track"><div class="gc-size-fill rle" id="rleBar" style="width:0%"></div></div>
+                        <span class="gc-size-val" id="rleBarVal">-</span>
+                    </div>
+                    <div class="gc-size-row">
+                        <span class="gc-size-label">⚡ Deflate</span>
+                        <div class="gc-size-track"><div class="gc-size-fill deflate" id="deflateBar" style="width:0%"></div></div>
+                        <span class="gc-size-val" id="deflateBarVal">-</span>
+                    </div>
+                    <div class="gc-size-row">
+                        <span class="gc-size-label">🧠 Neural</span>
+                        <div class="gc-size-track"><div class="gc-size-fill neural" id="neuralBar" style="width:0%"></div></div>
+                        <span class="gc-size-val" id="neuralBarVal">-</span>
+                    </div>
+                </div>
+
+                <div class="gc-results-grid" id="comparisonGrid"></div>
+            </div>
+        </section>
+
+        <!-- File Mode -->
+        <section id="fileMode" class="mode-panel hidden">
+            <div class="gc-grid-2">
+                <div class="gc-panel">
+                    <h2>📤 文件上传</h2>
+                    <div class="gc-upload-zone" id="uploadZone">
+                        <div class="gc-upload-icon">📂</div>
+                        <div class="gc-upload-text">拖拽文件到此处 或 点击上传</div>
+                        <div class="gc-upload-hint">支持文本文件、日志文件、二进制文件等各种类型</div>
+                    </div>
+                    <input type="file" id="fileInput" style="display:none;">
+                    <div id="fileList"></div>
+
+                    <div class="action-bar" style="display:flex;gap:12px;margin-top:var(--spacing-md);">
+                        <button class="btn btn-primary" id="compressBtn" disabled>🚀 开始压缩</button>
+                        <button class="btn btn-ghost" id="clearFilesBtn">🗑️ 清空</button>
+                    </div>
+                </div>
+
+                <div class="gc-panel hidden" id="compressResults">
+                    <h2>📊 压缩结果</h2>
+                    <div id="singleResult"></div>
+                    <a href="#" class="download-link hidden" id="downloadLink" target="_blank" style="display:inline-flex;align-items:center;gap:8px;margin-top:var(--spacing-md);padding:0.75rem 1.5rem;background:var(--success);color:#fff;text-decoration:none;border-radius:var(--radius-md);font-weight:600;">⬇️ 下载压缩文件</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Algorithm Info -->
+        <section class="gc-panel gc-info-section">
+            <h2>📚 算法特性对比</h2>
+            <table class="gc-info-table">
+                <thead>
+                    <tr>
+                        <th>算法</th>
+                        <th>类型</th>
+                        <th>适用场景</th>
+                        <th>压缩速度</th>
+                        <th>压缩比</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>LZ77 + Huffman</td>
+                        <td>字典+熵编码</td>
+                        <td>通用文本、代码</td>
+                        <td>★★★★</td>
+                        <td>★★★★</td>
+                    </tr>
+                    <tr>
+                        <td>RLE</td>
+                        <td>行程编码</td>
+                        <td>图像、重复数据</td>
+                        <td>★★★★★</td>
+                        <td>★★</td>
+                    </tr>
+                    <tr>
+                        <td>Deflate</td>
+                        <td>标准算法</td>
+                        <td>通用压缩、归档</td>
+                        <td>★★★★★</td>
+                        <td>★★★★★</td>
+                    </tr>
+                    <tr>
+                        <td>Neural Predictor</td>
+                        <td>神经网络</td>
+                        <td>模式数据、序列</td>
+                        <td>★★★</td>
+                        <td>★★★★</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <script src="js/modules/general/rle.js?v=2"></script>
+    <script src="js/modules/general/lz77.js?v=2"></script>
+    <script src="js/modules/general/deflate.js?v=2"></script>
+    <script src="js/modules/general/neural.js?v=2"></script>
+    <script src="js/modules/general/index.js?v=2"></script>
+    <script src="js/general-app.js?v=2"></script>
+</body>
+</html>

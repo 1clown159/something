@@ -1,0 +1,133 @@
+{
+  "value_count": 30015000,
+  "raw_float32_bytes": 120060000,
+  "settings": {
+    "zstd_level": 9,
+    "zstd_threads": 0,
+    "sign_rle_level": 3,
+    "lzma_preset": 6,
+    "chunk_values": 8000000,
+    "limit_blocks": 0,
+    "limit_values": 0,
+    "skip_bitshuffle": false,
+    "bitshuffle_mode": "auto",
+    "keep_temp": false,
+    "profile_range": [
+      325,
+      349
+    ]
+  },
+  "sign": {
+    "best_bytes": 1280476,
+    "best_method": "bitpack+lzma",
+    "best_seconds": 2.2539695000050415,
+    "candidates": {
+      "bitpack+zstd": 1645766,
+      "bitpack+lzma": 1280476,
+      "rle_lengths+zstd": 1413817,
+      "rle_lengths+lzma": 1326820,
+      "rle_deltas+zstd": 1880836,
+      "rle_deltas+lzma": 1516576
+    },
+    "candidate_seconds": {
+      "bitpack+zstd": 0.11605700000291108,
+      "bitpack+lzma": 2.2539695000050415,
+      "rle_lengths+zstd": 0.01991980000093463,
+      "rle_lengths+lzma": 1.1229172000021208,
+      "rle_deltas+zstd": 0.032368899999710266,
+      "rle_deltas+lzma": 3.3385493000096176
+    },
+    "rle": {
+      "run_count": 2524124,
+      "max_run": 155,
+      "first_run_length": 117,
+      "length_dtype": "uint8"
+    }
+  },
+  "mantissa": {
+    "whole_zstd_bytes": 83466386,
+    "whole_zstd_seconds": 2.114518799997313,
+    "whole_zstd_method": "mantissa23_packed+zstd",
+    "pathL_lite_bytes": 78848698,
+    "pathL_lite_seconds": 1.716992300000129,
+    "pathL_lite_method": "mid15_bytesplit_zstd + hi4lo4_raw_zstd",
+    "pathL_lite_detail": {
+      "mid_bytes": 53190987,
+      "mid_method": "mid15_bytesplit_zstd",
+      "mid_seconds": 1.0513044000035734,
+      "mid_candidates": {
+        "mid15_raw_u16_zstd": 56393764,
+        "mid15_bytesplit_zstd": 53190987,
+        "mid15_bitshuffle_zstd": 53514892
+      },
+      "mid_candidate_seconds": {
+        "mid15_raw_u16_zstd": 1.2727006000022811,
+        "mid15_bytesplit_zstd": 1.0513044000035734,
+        "mid15_bitshuffle_zstd": 1.3437217000027886
+      },
+      "side_bytes": 25657711,
+      "side_method": "hi4lo4_raw_zstd",
+      "side_seconds": 0.6656878999965556,
+      "side_candidates": {
+        "hi4lo4_raw_zstd": 25657711,
+        "hi4lo4_bitshuffle_zstd": 26159641
+      },
+      "side_candidate_seconds": {
+        "hi4lo4_raw_zstd": 0.6656878999965556,
+        "hi4lo4_bitshuffle_zstd": 0.7066148999983852
+      }
+    }
+  },
+  "timing": {
+    "pass1_wall_seconds": 8.34660839999924,
+    "pass1_compressor_seconds": 7.474238200007676,
+    "pass1_preprocess_overhead_seconds": 0.8723701999915647,
+    "pass2_wall_seconds": 4.771254900002532,
+    "pass2_compressor_seconds": 4.513755200012383,
+    "pass2_preprocess_overhead_seconds": 0.25749969999014866,
+    "pass3_wall_seconds": 4.39219580000281,
+    "pass3_temp_write_seconds": 1.7426966999992146,
+    "pass3_compressor_seconds": 2.050336600001174,
+    "pass3_preprocess_overhead_seconds": 2.341859200001636
+  },
+  "combined_schemes": [
+    {
+      "scheme": "PostData predicted exp + sign-best + PathL-lite",
+      "sign_bytes": 1280476,
+      "sign_method": "bitpack+lzma",
+      "sign_seconds": 2.2539695000050415,
+      "exp_bytes": 4678499.0,
+      "exp_source": "provided_exp_bytes",
+      "exp_seconds": null,
+      "mant_bytes": 78848698,
+      "mant_method": "mid15_bytesplit_zstd + hi4lo4_raw_zstd",
+      "mant_seconds": 1.716992300000129,
+      "total_bytes": 84807673.0,
+      "aux_seconds": 3.9709618000051705,
+      "total_seconds": null,
+      "bits_per_value": 22.60407742795269,
+      "compression_ratio_vs_float32": 1.4156737916862783,
+      "space_saving_ratio": 0.2936225803764785,
+      "exponent_method": "actual global_diag range-coded exponent bitstream"
+    },
+    {
+      "scheme": "PostData predicted exp + sign-best + mantissa-whole-zstd",
+      "sign_bytes": 1280476,
+      "sign_method": "bitpack+lzma",
+      "sign_seconds": 2.2539695000050415,
+      "exp_bytes": 4678499.0,
+      "exp_source": "provided_exp_bytes",
+      "exp_seconds": null,
+      "mant_bytes": 83466386,
+      "mant_method": "mantissa23_packed+zstd",
+      "mant_seconds": 2.114518799997313,
+      "total_bytes": 89425361.0,
+      "aux_seconds": 4.368488300002355,
+      "total_seconds": null,
+      "bits_per_value": 23.834845510578045,
+      "compression_ratio_vs_float32": 1.3425721591439816,
+      "space_saving_ratio": 0.2551610777944361,
+      "exponent_method": "actual global_diag range-coded exponent bitstream"
+    }
+  ]
+}

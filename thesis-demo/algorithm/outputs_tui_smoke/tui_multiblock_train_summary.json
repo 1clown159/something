@@ -1,0 +1,921 @@
+{
+  "stage": "stage4",
+  "mode": "tui_multiblock",
+  "device": "cuda",
+  "manifest": "E:\\code\\thesis\\20260420\\tui_blocks_manifest.json",
+  "split_mode": "heldout",
+  "val_ranges": [
+    [
+      3898,
+      3912
+    ],
+    [
+      4075,
+      4089
+    ],
+    [
+      4273,
+      4287
+    ]
+  ],
+  "test_ranges": [
+    [
+      3913,
+      3927
+    ],
+    [
+      4090,
+      4104
+    ],
+    [
+      4288,
+      4302
+    ]
+  ],
+  "config": {
+    "seed": 20260420,
+    "patch_shape": [
+      9,
+      17
+    ],
+    "tile_shape": [
+      64,
+      64
+    ],
+    "stage4_train_samples": 4000,
+    "stage4_val_samples": 1000,
+    "stage4_eval_samples": 32000,
+    "stage4_base_channels": 8,
+    "batch_size": 128,
+    "epochs_stage4": 1,
+    "learning_rate": 0.001,
+    "weight_decay": 0.0001,
+    "num_workers": 0,
+    "eval_trace_stride": 4,
+    "eval_sample_stride": 8,
+    "output_dir": "E:\\code\\thesis\\20260420\\outputs_tui_smoke",
+    "range_total": 32768,
+    "codec_device": "cpu",
+    "feature_mode": "diagonal_causal_edge",
+    "target_mode": "residual",
+    "valid_region_mode": "none",
+    "valid_region_min_nonzero_ratio": 0.0,
+    "valid_region_margin_traces": 0,
+    "valid_region_group_size": 1
+  },
+  "split_summary": {
+    "train": {
+      "segment_count": 21,
+      "profiles": 660,
+      "voxels": 1793788062,
+      "segments": [
+        {
+          "segment_id": "b0000_s3751_3927_x756_3072_train_s3751_3897",
+          "split": "train",
+          "block_id": "b0000_s3751_3927_x756_3072",
+          "local_profile_start": 0,
+          "profiles": 147,
+          "subline_start": 3751,
+          "subline_end": 3897,
+          "shape": [
+            147,
+            2317,
+            1501
+          ],
+          "dat_path": "E:\\code\\thesis\\20260420\\tui_blocks\\b0000_s3751_3927_x756_3072.dat",
+          "block_shape": [
+            177,
+            2317,
+            1501
+          ]
+        },
+        {
+          "segment_id": "b0001_s3928_3930_x757_3098_train_s3928_3930",
+          "split": "train",
+          "block_id": "b0001_s3928_3930_x757_3098",
+          "local_profile_start": 0,
+          "profiles": 3,
+          "subline_start": 3928,
+          "subline_end": 3930,
+          "shape": [
+            3,
+            2342,
+            1501
+          ],
+          "dat_path": "E:\\code\\thesis\\20260420\\tui_blocks\\b0001_s3928_3930_x757_3098.dat",
+          "block_shape": [
+            3,
+            2342,
+            1501
+          ]
+        },
+        {
+          "segment_id": "b0002_s3931_3933_x757_3096_train_s3931_3933",
+          "split": "train",
+          "block_id": "b0002_s3931_3933_x757_3096",
+          "local_profile_start": 0,
+          "profiles": 3,
+          "subline_start": 3931,
+          "subline_end": 3933,
+          "shape": [
+            3,
+            2340,
+            1501
+          ],
+          "dat_path": "E:\\code\\thesis\\20260420\\tui_blocks\\b0002_s3931_3933_x757_3096.dat",
+          "block_shape": [
+            3,
+            2340,
+            1501
+          ]
+        },
+        {
+          "segment_id": "b0003_s3934_3936_x757_3095_train_s3934_3936",
+          "split": "train",
+          "block_id": "b0003_s3934_3936_x757_3095",
+          "local_profile_start": 0,
+          "profiles": 3,
+          "subline_start": 3934,
+          "subline_end": 3936,
+          "shape": [
+            3,
+            2339,
+            1501
+          ],
+          "dat_path": "E:\\code\\thesis\\20260420\\tui_blocks\\b0003_s3934_3936_x757_3095.dat",
+          "block_shape": [
+            3,
+            2339,
+            1501
+          ]
+        },
+        {
+          "segment_id": "b0004_s3937_3951_x758_3228_train_s3937_3951",
+          "split": "train",
+          "block_id": "b0004_s3937_3951_x758_3228",
+          "local_profile_start": 0,
+          "profiles": 15,
+          "subline_start": 3937,
+          "subline_end": 3951,
+          "shape": [
+            15,
+            2471,
+            1501
+          ],
+          "dat_path": "E:\\code\\thesis\\20260420\\tui_blocks\\b0004_s3937_3951_x758_3228.dat",
+          "block_shape": [
+            15,
+            2471,
+            1501
+          ]
+        },
+        {
+          "segment_id": "b0005_s3952_4104_x890_3228_train_s3952_4074",
+          "split": "train",
+          "block_id": "b0005_s3952_4104_x890_3228",
+          "local_profile_start": 0,
+          "profiles": 123,
+          "subline_start": 3952,
+          "subline_end": 4074,
+          "shape": [
+            123,
+            2339,
+            1501
+          ],
+          "dat_path": "E:\\code\\thesis\\20260420\\tui_blocks\\b0005_s3952_4104_x890_3228.dat",
+          "block_shape": [
+            153,
+            2339,
+            1501
+          ]
+        },
+        {
+          "segment_id": "b0006_s4105_4107_x890_2280_train_s4105_4107",
+          "split": "train",
+          "block_id": "b0006_s4105_4107_x890_2280",
+          "local_profile_start": 0,
+          "profiles": 3,
+          "subline_start": 4105,
+          "subline_end": 4107,
+          "shape": [
+            3,
+            1391,
+            1501
+          ],
+          "dat_path": "E:\\code\\thesis\\20260420\\tui_blocks\\b0006_s4105_4107_x890_2280.dat",
+          "block_shape": [
+            3,
+            1391,
+            1501
+          ]
+        },
+        {
+          "segment_id": "b0007_s4108_4113_x890_2272_train_s4108_4113",
+          "split": "train",
+          "block_id": "b0007_s4108_4113_x890_2272",
+          "local_profile_start": 0,
+          "profiles": 6,
+          "subline_start": 4108,
+          "subline_end": 4113,
+          "shape": [
+            6,
+            1383,
+            1501
+          ],
+          "dat_path": "E:\\code\\thesis\\20260420\\tui_blocks\\b0007_s4108_4113_x890_2272.dat",
+          "block_shape": [
+            6,
+            1383,
+            1501
+          ]
+        },
+        {
+          "segment_id": "b0008_s4114_4116_x890_2273_train_s4114_4116",
+          "split": "train",
+          "block_id": "b0008_s4114_4116_x890_2273",
+          "local_profile_start": 0,
+          "profiles": 3,
+          "subline_start": 4114,
+          "subline_end": 4116,
+          "shape": [
+            3,
+            1384,
+            1501
+          ],
+          "dat_path": "E:\\code\\thesis\\20260420\\tui_blocks\\b0008_s4114_4116_x890_2273.dat",
+          "block_shape": [
+            3,
+            1384,
+            1501
+          ]
+        },
+        {
+          "segment_id": "b0009_s4117_4122_x890_2274_train_s4117_4122",
+          "split": "train",
+          "block_id": "b0009_s4117_4122_x890_2274",
+          "local_profile_start": 0,
+          "profiles": 6,
+          "subline_start": 4117,
+          "subline_end": 4122,
+          "shape": [
+            6,
+            1385,
+            1501
+          ],
+          "dat_path": "E:\\code\\thesis\\20260420\\tui_blocks\\b0009_s4117_4122_x890_2274.dat",
+          "block_shape": [
+            6,
+            1385,
+            1501
+          ]
+        },
+        {
+          "segment_id": "b0010_s4123_4125_x890_2275_train_s4123_4125",
+          "split": "train",
+          "block_id": "b0010_s4123_4125_x890_2275",
+          "local_profile_start": 0,
+          "profiles": 3,
+          "subline_start": 4123,
+          "subline_end": 4125,
+          "shape": [
+            3,
+            1386,
+            1501
+          ],
+          "dat_path": "E:\\code\\thesis\\20260420\\tui_blocks\\b0010_s4123_4125_x890_2275.dat",
+          "block_shape": [
+            3,
+            1386,
+            1501
+          ]
+        },
+        {
+          "segment_id": "b0011_s4126_4131_x890_2276_train_s4126_4131",
+          "split": "train",
+          "block_id": "b0011_s4126_4131_x890_2276",
+          "local_profile_start": 0,
+          "profiles": 6,
+          "subline_start": 4126,
+          "subline_end": 4131,
+          "shape": [
+            6,
+            1387,
+            1501
+          ],
+          "dat_path": "E:\\code\\thesis\\20260420\\tui_blocks\\b0011_s4126_4131_x890_2276.dat",
+          "block_shape": [
+            6,
+            1387,
+            1501
+          ]
+        },
+        {
+          "segment_id": "b0012_s4132_4134_x890_2277_train_s4132_4134",
+          "split": "train",
+          "block_id": "b0012_s4132_4134_x890_2277",
+          "local_profile_start": 0,
+          "profiles": 3,
+          "subline_start": 4132,
+          "subline_end": 4134,
+          "shape": [
+            3,
+            1388,
+            1501
+          ],
+          "dat_path": "E:\\code\\thesis\\20260420\\tui_blocks\\b0012_s4132_4134_x890_2277.dat",
+          "block_shape": [
+            3,
+            1388,
+            1501
+          ]
+        },
+        {
+          "segment_id": "b0013_s4135_4140_x890_2278_train_s4135_4140",
+          "split": "train",
+          "block_id": "b0013_s4135_4140_x890_2278",
+          "local_profile_start": 0,
+          "profiles": 6,
+          "subline_start": 4135,
+          "subline_end": 4140,
+          "shape": [
+            6,
+            1389,
+            1501
+          ],
+          "dat_path": "E:\\code\\thesis\\20260420\\tui_blocks\\b0013_s4135_4140_x890_2278.dat",
+          "block_shape": [
+            6,
+            1389,
+            1501
+          ]
+        },
+        {
+          "segment_id": "b0014_s4141_4143_x890_2279_train_s4141_4143",
+          "split": "train",
+          "block_id": "b0014_s4141_4143_x890_2279",
+          "local_profile_start": 0,
+          "profiles": 3,
+          "subline_start": 4141,
+          "subline_end": 4143,
+          "shape": [
+            3,
+            1390,
+            1501
+          ],
+          "dat_path": "E:\\code\\thesis\\20260420\\tui_blocks\\b0014_s4141_4143_x890_2279.dat",
+          "block_shape": [
+            3,
+            1390,
+            1501
+          ]
+        },
+        {
+          "segment_id": "b0015_s4144_4302_x890_2280_train_s4144_4272",
+          "split": "train",
+          "block_id": "b0015_s4144_4302_x890_2280",
+          "local_profile_start": 0,
+          "profiles": 129,
+          "subline_start": 4144,
+          "subline_end": 4272,
+          "shape": [
+            129,
+            1391,
+            1501
+          ],
+          "dat_path": "E:\\code\\thesis\\20260420\\tui_blocks\\b0015_s4144_4302_x890_2280.dat",
+          "block_shape": [
+            159,
+            1391,
+            1501
+          ]
+        },
+        {
+          "segment_id": "b0016_s4303_4305_x826_2150_train_s4303_4305",
+          "split": "train",
+          "block_id": "b0016_s4303_4305_x826_2150",
+          "local_profile_start": 0,
+          "profiles": 3,
+          "subline_start": 4303,
+          "subline_end": 4305,
+          "shape": [
+            3,
+            1325,
+            1501
+          ],
+          "dat_path": "E:\\code\\thesis\\20260420\\tui_blocks\\b0016_s4303_4305_x826_2150.dat",
+          "block_shape": [
+            3,
+            1325,
+            1501
+          ]
+        },
+        {
+          "segment_id": "b0017_s4306_4356_x762_2150_train_s4306_4356",
+          "split": "train",
+          "block_id": "b0017_s4306_4356_x762_2150",
+          "local_profile_start": 0,
+          "profiles": 51,
+          "subline_start": 4306,
+          "subline_end": 4356,
+          "shape": [
+            51,
+            1389,
+            1501
+          ],
+          "dat_path": "E:\\code\\thesis\\20260420\\tui_blocks\\b0017_s4306_4356_x762_2150.dat",
+          "block_shape": [
+            51,
+            1389,
+            1501
+          ]
+        },
+        {
+          "segment_id": "b0018_s4357_4404_x761_2150_train_s4357_4404",
+          "split": "train",
+          "block_id": "b0018_s4357_4404_x761_2150",
+          "local_profile_start": 0,
+          "profiles": 48,
+          "subline_start": 4357,
+          "subline_end": 4404,
+          "shape": [
+            48,
+            1390,
+            1501
+          ],
+          "dat_path": "E:\\code\\thesis\\20260420\\tui_blocks\\b0018_s4357_4404_x761_2150.dat",
+          "block_shape": [
+            48,
+            1390,
+            1501
+          ]
+        },
+        {
+          "segment_id": "b0019_s4405_4452_x760_2150_train_s4405_4452",
+          "split": "train",
+          "block_id": "b0019_s4405_4452_x760_2150",
+          "local_profile_start": 0,
+          "profiles": 48,
+          "subline_start": 4405,
+          "subline_end": 4452,
+          "shape": [
+            48,
+            1391,
+            1501
+          ],
+          "dat_path": "E:\\code\\thesis\\20260420\\tui_blocks\\b0019_s4405_4452_x760_2150.dat",
+          "block_shape": [
+            48,
+            1391,
+            1501
+          ]
+        },
+        {
+          "segment_id": "b0020_s4453_4500_x759_2150_train_s4453_4500",
+          "split": "train",
+          "block_id": "b0020_s4453_4500_x759_2150",
+          "local_profile_start": 0,
+          "profiles": 48,
+          "subline_start": 4453,
+          "subline_end": 4500,
+          "shape": [
+            48,
+            1392,
+            1501
+          ],
+          "dat_path": "E:\\code\\thesis\\20260420\\tui_blocks\\b0020_s4453_4500_x759_2150.dat",
+          "block_shape": [
+            48,
+            1392,
+            1501
+          ]
+        }
+      ]
+    },
+    "val": {
+      "segment_count": 3,
+      "profiles": 45,
+      "voxels": 136148205,
+      "segments": [
+        {
+          "segment_id": "b0000_s3751_3927_x756_3072_val_s3898_3912",
+          "split": "val",
+          "block_id": "b0000_s3751_3927_x756_3072",
+          "local_profile_start": 147,
+          "profiles": 15,
+          "subline_start": 3898,
+          "subline_end": 3912,
+          "shape": [
+            15,
+            2317,
+            1501
+          ],
+          "dat_path": "E:\\code\\thesis\\20260420\\tui_blocks\\b0000_s3751_3927_x756_3072.dat",
+          "block_shape": [
+            177,
+            2317,
+            1501
+          ]
+        },
+        {
+          "segment_id": "b0005_s3952_4104_x890_3228_val_s4075_4089",
+          "split": "val",
+          "block_id": "b0005_s3952_4104_x890_3228",
+          "local_profile_start": 123,
+          "profiles": 15,
+          "subline_start": 4075,
+          "subline_end": 4089,
+          "shape": [
+            15,
+            2339,
+            1501
+          ],
+          "dat_path": "E:\\code\\thesis\\20260420\\tui_blocks\\b0005_s3952_4104_x890_3228.dat",
+          "block_shape": [
+            153,
+            2339,
+            1501
+          ]
+        },
+        {
+          "segment_id": "b0015_s4144_4302_x890_2280_val_s4273_4287",
+          "split": "val",
+          "block_id": "b0015_s4144_4302_x890_2280",
+          "local_profile_start": 129,
+          "profiles": 15,
+          "subline_start": 4273,
+          "subline_end": 4287,
+          "shape": [
+            15,
+            1391,
+            1501
+          ],
+          "dat_path": "E:\\code\\thesis\\20260420\\tui_blocks\\b0015_s4144_4302_x890_2280.dat",
+          "block_shape": [
+            159,
+            1391,
+            1501
+          ]
+        }
+      ]
+    },
+    "test": {
+      "segment_count": 3,
+      "profiles": 45,
+      "voxels": 136148205,
+      "segments": [
+        {
+          "segment_id": "b0000_s3751_3927_x756_3072_test_s3913_3927",
+          "split": "test",
+          "block_id": "b0000_s3751_3927_x756_3072",
+          "local_profile_start": 162,
+          "profiles": 15,
+          "subline_start": 3913,
+          "subline_end": 3927,
+          "shape": [
+            15,
+            2317,
+            1501
+          ],
+          "dat_path": "E:\\code\\thesis\\20260420\\tui_blocks\\b0000_s3751_3927_x756_3072.dat",
+          "block_shape": [
+            177,
+            2317,
+            1501
+          ]
+        },
+        {
+          "segment_id": "b0005_s3952_4104_x890_3228_test_s4090_4104",
+          "split": "test",
+          "block_id": "b0005_s3952_4104_x890_3228",
+          "local_profile_start": 138,
+          "profiles": 15,
+          "subline_start": 4090,
+          "subline_end": 4104,
+          "shape": [
+            15,
+            2339,
+            1501
+          ],
+          "dat_path": "E:\\code\\thesis\\20260420\\tui_blocks\\b0005_s3952_4104_x890_3228.dat",
+          "block_shape": [
+            153,
+            2339,
+            1501
+          ]
+        },
+        {
+          "segment_id": "b0015_s4144_4302_x890_2280_test_s4288_4302",
+          "split": "test",
+          "block_id": "b0015_s4144_4302_x890_2280",
+          "local_profile_start": 144,
+          "profiles": 15,
+          "subline_start": 4288,
+          "subline_end": 4302,
+          "shape": [
+            15,
+            1391,
+            1501
+          ],
+          "dat_path": "E:\\code\\thesis\\20260420\\tui_blocks\\b0015_s4144_4302_x890_2280.dat",
+          "block_shape": [
+            159,
+            1391,
+            1501
+          ]
+        }
+      ]
+    }
+  },
+  "train_sample_count": 5035,
+  "val_sample_count": 1000,
+  "train_allocation": [
+    {
+      "segment_id": "b0000_s3751_3927_x756_3072_train_s3751_3897",
+      "split": "train",
+      "shape": [
+        147,
+        2317,
+        1501
+      ],
+      "voxel_count": 511239099,
+      "sample_count": 1140
+    },
+    {
+      "segment_id": "b0001_s3928_3930_x757_3098_train_s3928_3930",
+      "split": "train",
+      "shape": [
+        3,
+        2342,
+        1501
+      ],
+      "voxel_count": 10546026,
+      "sample_count": 100
+    },
+    {
+      "segment_id": "b0002_s3931_3933_x757_3096_train_s3931_3933",
+      "split": "train",
+      "shape": [
+        3,
+        2340,
+        1501
+      ],
+      "voxel_count": 10537020,
+      "sample_count": 100
+    },
+    {
+      "segment_id": "b0003_s3934_3936_x757_3095_train_s3934_3936",
+      "split": "train",
+      "shape": [
+        3,
+        2339,
+        1501
+      ],
+      "voxel_count": 10532517,
+      "sample_count": 100
+    },
+    {
+      "segment_id": "b0004_s3937_3951_x758_3228_train_s3937_3951",
+      "split": "train",
+      "shape": [
+        15,
+        2471,
+        1501
+      ],
+      "voxel_count": 55634565,
+      "sample_count": 124
+    },
+    {
+      "segment_id": "b0005_s3952_4104_x890_3228_train_s3952_4074",
+      "split": "train",
+      "shape": [
+        123,
+        2339,
+        1501
+      ],
+      "voxel_count": 431833197,
+      "sample_count": 963
+    },
+    {
+      "segment_id": "b0006_s4105_4107_x890_2280_train_s4105_4107",
+      "split": "train",
+      "shape": [
+        3,
+        1391,
+        1501
+      ],
+      "voxel_count": 6263673,
+      "sample_count": 100
+    },
+    {
+      "segment_id": "b0007_s4108_4113_x890_2272_train_s4108_4113",
+      "split": "train",
+      "shape": [
+        6,
+        1383,
+        1501
+      ],
+      "voxel_count": 12455298,
+      "sample_count": 100
+    },
+    {
+      "segment_id": "b0008_s4114_4116_x890_2273_train_s4114_4116",
+      "split": "train",
+      "shape": [
+        3,
+        1384,
+        1501
+      ],
+      "voxel_count": 6232152,
+      "sample_count": 100
+    },
+    {
+      "segment_id": "b0009_s4117_4122_x890_2274_train_s4117_4122",
+      "split": "train",
+      "shape": [
+        6,
+        1385,
+        1501
+      ],
+      "voxel_count": 12473310,
+      "sample_count": 100
+    },
+    {
+      "segment_id": "b0010_s4123_4125_x890_2275_train_s4123_4125",
+      "split": "train",
+      "shape": [
+        3,
+        1386,
+        1501
+      ],
+      "voxel_count": 6241158,
+      "sample_count": 100
+    },
+    {
+      "segment_id": "b0011_s4126_4131_x890_2276_train_s4126_4131",
+      "split": "train",
+      "shape": [
+        6,
+        1387,
+        1501
+      ],
+      "voxel_count": 12491322,
+      "sample_count": 100
+    },
+    {
+      "segment_id": "b0012_s4132_4134_x890_2277_train_s4132_4134",
+      "split": "train",
+      "shape": [
+        3,
+        1388,
+        1501
+      ],
+      "voxel_count": 6250164,
+      "sample_count": 100
+    },
+    {
+      "segment_id": "b0013_s4135_4140_x890_2278_train_s4135_4140",
+      "split": "train",
+      "shape": [
+        6,
+        1389,
+        1501
+      ],
+      "voxel_count": 12509334,
+      "sample_count": 100
+    },
+    {
+      "segment_id": "b0014_s4141_4143_x890_2279_train_s4141_4143",
+      "split": "train",
+      "shape": [
+        3,
+        1390,
+        1501
+      ],
+      "voxel_count": 6259170,
+      "sample_count": 100
+    },
+    {
+      "segment_id": "b0015_s4144_4302_x890_2280_train_s4144_4272",
+      "split": "train",
+      "shape": [
+        129,
+        1391,
+        1501
+      ],
+      "voxel_count": 269337939,
+      "sample_count": 601
+    },
+    {
+      "segment_id": "b0016_s4303_4305_x826_2150_train_s4303_4305",
+      "split": "train",
+      "shape": [
+        3,
+        1325,
+        1501
+      ],
+      "voxel_count": 5966475,
+      "sample_count": 100
+    },
+    {
+      "segment_id": "b0017_s4306_4356_x762_2150_train_s4306_4356",
+      "split": "train",
+      "shape": [
+        51,
+        1389,
+        1501
+      ],
+      "voxel_count": 106329339,
+      "sample_count": 237
+    },
+    {
+      "segment_id": "b0018_s4357_4404_x761_2150_train_s4357_4404",
+      "split": "train",
+      "shape": [
+        48,
+        1390,
+        1501
+      ],
+      "voxel_count": 100146720,
+      "sample_count": 223
+    },
+    {
+      "segment_id": "b0019_s4405_4452_x760_2150_train_s4405_4452",
+      "split": "train",
+      "shape": [
+        48,
+        1391,
+        1501
+      ],
+      "voxel_count": 100218768,
+      "sample_count": 223
+    },
+    {
+      "segment_id": "b0020_s4453_4500_x759_2150_train_s4453_4500",
+      "split": "train",
+      "shape": [
+        48,
+        1392,
+        1501
+      ],
+      "voxel_count": 100290816,
+      "sample_count": 224
+    }
+  ],
+  "val_allocation": [
+    {
+      "segment_id": "b0000_s3751_3927_x756_3072_val_s3898_3912",
+      "split": "val",
+      "shape": [
+        15,
+        2317,
+        1501
+      ],
+      "voxel_count": 52167255,
+      "sample_count": 383
+    },
+    {
+      "segment_id": "b0005_s3952_4104_x890_3228_val_s4075_4089",
+      "split": "val",
+      "shape": [
+        15,
+        2339,
+        1501
+      ],
+      "voxel_count": 52662585,
+      "sample_count": 387
+    },
+    {
+      "segment_id": "b0015_s4144_4302_x890_2280_val_s4273_4287",
+      "split": "val",
+      "shape": [
+        15,
+        1391,
+        1501
+      ],
+      "voxel_count": 31318365,
+      "sample_count": 230
+    }
+  ],
+  "training": {
+    "history": [
+      {
+        "epoch": 1,
+        "train_loss": 4.212066257082836,
+        "train_accuracy": 0.3529294935451837,
+        "val_loss": 2.240555025100708,
+        "val_accuracy": 0.574
+      }
+    ],
+    "best_val_loss": 2.240555025100708,
+    "train_metrics": {
+      "loss": 4.212066257082836,
+      "accuracy_top1": 0.3529294935451837
+    },
+    "val_metrics": {
+      "loss": 2.240555025100708,
+      "accuracy_top1": 0.574,
+      "accuracy_top5": 0.861
+    }
+  },
+  "checkpoint_path": "E:\\code\\thesis\\20260420\\outputs_tui_smoke\\stage4\\causal\\checkpoint.pt"
+}

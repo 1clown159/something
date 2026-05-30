@@ -1,0 +1,125 @@
+{
+  "value_count": 1024,
+  "raw_float32_bytes": 4096,
+  "settings": {
+    "zstd_level": 9,
+    "zstd_threads": 0,
+    "sign_rle_level": 3,
+    "lzma_preset": 6,
+    "chunk_values": 8000000,
+    "limit_blocks": 0,
+    "limit_values": 1024,
+    "skip_bitshuffle": true,
+    "bitshuffle_mode": "auto",
+    "keep_temp": false,
+    "profile_range": [
+      325,
+      325
+    ]
+  },
+  "sign": {
+    "best_bytes": 85,
+    "best_method": "rle_lengths+zstd",
+    "best_seconds": 3.510000169626437e-05,
+    "candidates": {
+      "bitpack+zstd": 105,
+      "bitpack+lzma": 172,
+      "rle_lengths+zstd": 85,
+      "rle_lengths+lzma": 140,
+      "rle_deltas+zstd": 128,
+      "rle_deltas+lzma": 200
+    },
+    "candidate_seconds": {
+      "bitpack+zstd": 5.619999865302816e-05,
+      "bitpack+lzma": 6.999999823165126e-05,
+      "rle_lengths+zstd": 3.510000169626437e-05,
+      "rle_lengths+lzma": 5.339999916031957e-05,
+      "rle_deltas+zstd": 1.8500002624932677e-05,
+      "rle_deltas+lzma": 5.539999619941227e-05
+    },
+    "rle": {
+      "run_count": 93,
+      "max_run": 117,
+      "first_run_length": 117,
+      "length_dtype": "uint8"
+    }
+  },
+  "mantissa": {
+    "whole_zstd_bytes": 2747,
+    "whole_zstd_seconds": 6.25000029685907e-05,
+    "whole_zstd_method": "mantissa23_packed+zstd",
+    "pathL_lite_bytes": 2700,
+    "pathL_lite_seconds": 8.779999916441739e-05,
+    "pathL_lite_method": "mid15_bytesplit_zstd + hi4lo4_raw_zstd",
+    "pathL_lite_detail": {
+      "mid_bytes": 1772,
+      "mid_method": "mid15_bytesplit_zstd",
+      "mid_seconds": 5.759999839938246e-05,
+      "mid_candidates": {
+        "mid15_raw_u16_zstd": 1838,
+        "mid15_bytesplit_zstd": 1772
+      },
+      "mid_candidate_seconds": {
+        "mid15_raw_u16_zstd": 4.1700001020217314e-05,
+        "mid15_bytesplit_zstd": 5.759999839938246e-05
+      },
+      "side_bytes": 928,
+      "side_method": "hi4lo4_raw_zstd",
+      "side_seconds": 3.020000076503493e-05,
+      "side_candidates": {
+        "hi4lo4_raw_zstd": 928
+      },
+      "side_candidate_seconds": {
+        "hi4lo4_raw_zstd": 3.020000076503493e-05
+      }
+    }
+  },
+  "timing": {
+    "pass1_wall_seconds": 0.004898200000752695,
+    "pass1_compressor_seconds": 0.00031820000003790483,
+    "pass1_preprocess_overhead_seconds": 0.00458000000071479,
+    "pass2_wall_seconds": 0.007855299998482224,
+    "pass2_compressor_seconds": 0.00016239999968092889,
+    "pass2_preprocess_overhead_seconds": 0.007692899998801295
+  },
+  "combined_schemes": [
+    {
+      "scheme": "PostData predicted exp + sign-best + PathL-lite",
+      "sign_bytes": 85,
+      "sign_method": "rle_lengths+zstd",
+      "sign_seconds": 3.510000169626437e-05,
+      "exp_bytes": 128.0,
+      "exp_source": "provided_exp_bytes",
+      "exp_seconds": null,
+      "mant_bytes": 2700,
+      "mant_method": "mid15_bytesplit_zstd + hi4lo4_raw_zstd",
+      "mant_seconds": 8.779999916441739e-05,
+      "total_bytes": 2913.0,
+      "aux_seconds": 0.00012290000086068176,
+      "total_seconds": null,
+      "bits_per_value": 22.7578125,
+      "compression_ratio_vs_float32": 1.4061105389632682,
+      "space_saving_ratio": 0.288818359375,
+      "exponent_method": "actual global_diag range-coded exponent bitstream"
+    },
+    {
+      "scheme": "PostData predicted exp + sign-best + mantissa-whole-zstd",
+      "sign_bytes": 85,
+      "sign_method": "rle_lengths+zstd",
+      "sign_seconds": 3.510000169626437e-05,
+      "exp_bytes": 128.0,
+      "exp_source": "provided_exp_bytes",
+      "exp_seconds": null,
+      "mant_bytes": 2747,
+      "mant_method": "mantissa23_packed+zstd",
+      "mant_seconds": 6.25000029685907e-05,
+      "total_bytes": 2960.0,
+      "aux_seconds": 9.760000466485508e-05,
+      "total_seconds": null,
+      "bits_per_value": 23.125,
+      "compression_ratio_vs_float32": 1.3837837837837839,
+      "space_saving_ratio": 0.27734375,
+      "exponent_method": "actual global_diag range-coded exponent bitstream"
+    }
+  ]
+}

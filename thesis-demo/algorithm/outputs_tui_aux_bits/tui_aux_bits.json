@@ -1,0 +1,83 @@
+{
+  "value_count": 2066084472,
+  "raw_float32_bytes": 8264337888,
+  "settings": {
+    "zstd_level": 9,
+    "zstd_threads": -1,
+    "sign_rle_level": 3,
+    "lzma_preset": 6,
+    "chunk_values": 8000000,
+    "limit_blocks": 0,
+    "limit_values": 0,
+    "skip_bitshuffle": false,
+    "bitshuffle_mode": "auto",
+    "keep_temp": false
+  },
+  "sign": {
+    "best_bytes": 97068772,
+    "best_method": "rle_lengths+lzma",
+    "candidates": {
+      "bitpack+zstd": 168626643,
+      "bitpack+lzma": 113144724,
+      "rle_lengths+zstd": 187471724,
+      "rle_lengths+lzma": 97068772,
+      "rle_deltas+zstd": 206257845,
+      "rle_deltas+lzma": 126508012
+    },
+    "rle": {
+      "run_count": 423291500,
+      "max_run": 517,
+      "first_run_length": 4,
+      "length_dtype": "uint16"
+    }
+  },
+  "mantissa": {
+    "whole_zstd_bytes": 6057423252,
+    "whole_zstd_method": "mantissa23_packed+zstd",
+    "pathL_lite_bytes": 5716908328,
+    "pathL_lite_method": "mid15_bitshuffle_zstd + hi4lo4_raw_zstd",
+    "pathL_lite_detail": {
+      "mid_bytes": 3873997063,
+      "mid_method": "mid15_bitshuffle_zstd",
+      "mid_candidates": {
+        "mid15_raw_u16_zstd": 4090029342,
+        "mid15_bytesplit_zstd": 3874150940,
+        "mid15_bitshuffle_zstd": 3873997063
+      },
+      "side_bytes": 1842911265,
+      "side_method": "hi4lo4_raw_zstd",
+      "side_candidates": {
+        "hi4lo4_raw_zstd": 1842911265,
+        "hi4lo4_bitshuffle_zstd": 1877713662
+      }
+    }
+  },
+  "combined_schemes": [
+    {
+      "scheme": "TUI predicted exp + sign-best + PathL-lite",
+      "sign_bytes": 97068772,
+      "sign_method": "rle_lengths+lzma",
+      "exp_bytes": 317922264.2535161,
+      "exp_source": "average_nll_bits",
+      "mant_bytes": 5716908328,
+      "mant_method": "mid15_bitshuffle_zstd + hi4lo4_raw_zstd",
+      "total_bytes": 6131899364.253516,
+      "bits_per_value": 23.74307322804763,
+      "compression_ratio_vs_float32": 1.347761500486739,
+      "space_saving_ratio": 0.2580289616235115
+    },
+    {
+      "scheme": "TUI predicted exp + sign-best + mantissa-whole-zstd",
+      "sign_bytes": 97068772,
+      "sign_method": "rle_lengths+lzma",
+      "exp_bytes": 317922264.2535161,
+      "exp_source": "average_nll_bits",
+      "mant_bytes": 6057423252,
+      "mant_method": "mantissa23_packed+zstd",
+      "total_bytes": 6472414288.253516,
+      "bits_per_value": 25.06156694353595,
+      "compression_ratio_vs_float32": 1.276855516340875,
+      "space_saving_ratio": 0.21682603301450154
+    }
+  ]
+}

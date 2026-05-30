@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>SEG-Y 查看器 | Stage4</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/variables.css?v=9">
+    <link rel="stylesheet" href="css/layout.css?v=9">
+    <link rel="stylesheet" href="css/components.css?v=9">
+    <link rel="stylesheet" href="css/sgy-viewer.css?v=9">
+</head>
+<body>
+    <div class="bg-animation">
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+        <div class="gradient-orb orb-3"></div>
+    </div>
+
+    <nav class="top-nav">
+        <div class="nav-brand">
+            <div class="logo">
+                <a href="index.html" style="display:flex;align-items:center;gap:var(--spacing-xs);text-decoration:none;color:inherit;">
+                    <span class="logo-icon">◈</span>
+                    <span class="logo-text">Stage4</span>
+                </a>
+            </div>
+            <span class="nav-tagline">SEG-Y 查看器</span>
+        </div>
+        <div class="nav-links">
+            <a href="index.html" class="nav-link">首页</a>
+            <a href="compress.html" class="nav-link">压缩工具</a>
+            <a href="demo.html" class="nav-link">算法演示</a>
+            <a href="general-compress.html" class="nav-link">通用压缩</a>
+        </div>
+    </nav>
+
+    <main class="main-container">
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">功能选择</h3>
+                <nav class="step-nav" id="sgyNav">
+                    <button class="step-btn active" data-step="0">
+                        <span class="step-number">01</span>
+                        <span class="step-label">文件解析</span>
+                        <span class="step-hint">上传 & 元数据</span>
+                    </button>
+                    <button class="step-btn disabled" data-step="1">
+                        <span class="step-number">02</span>
+                        <span class="step-label">剖面热力图</span>
+                        <span class="step-hint">地震数据预览</span>
+                    </button>
+                    <button class="step-btn disabled" data-step="2">
+                        <span class="step-number">03</span>
+                        <span class="step-label">单道波形</span>
+                        <span class="step-hint">振幅曲线显示</span>
+                    </button>
+                    <button class="step-btn disabled" data-step="3">
+                        <span class="step-number">04</span>
+                        <span class="step-label">位统计分析</span>
+                        <span class="step-hint">符号｜指数｜尾数</span>
+                    </button>
+                </nav>
+            </div>
+            <div class="sidebar-section task-info" id="taskInfo" style="display:none;">
+                <h3 class="sidebar-title">当前文件</h3>
+                <div class="task-card">
+                    <div class="task-id" id="sgyFileName">-</div>
+                    <div class="task-meta"><span id="sgyFileSize">-</span></div>
+                </div>
+            </div>
+        </aside>
+
+        <div class="content-area" id="sgyContent">
+            <!-- Step 0: Upload & Metadata -->
+            <section class="content-section active" id="sgyStep0">
+                <header class="section-header">
+                    <h1 class="section-title">SEG-Y 文件解析</h1>
+                    <p class="section-desc">上传 .sgy 文件，自动扫描全文件获取元数据与网格信息</p>
+                </header>
+                <div class="sgy-upload-row">
+                    <input type="file" id="sgyFileInput" accept=".sgy,.segy" style="display:none;">
+                    <button class="btn btn-primary btn-large" id="sgyUploadBtn">📂 选择 SEG-Y 文件</button>
+                    <span id="sgyStatus" style="color:var(--text-muted);font-size:0.875rem;"></span>
+                </div>
+                <div id="sgyMetaResult" class="sgy-meta-card">
+                    <div class="chart-placeholder">选择 .sgy 文件后自动解析...</div>
+                </div>
+            </section>
+
+            <!-- Step 1: Heatmap -->
+            <section class="content-section" id="sgyStep1">
+                <header class="section-header">
+                    <h1 class="section-title">剖面热力图</h1>
+                    <p class="section-desc">选择剖面索引查看地震数据二维切片</p>
+                </header>
+                <div class="sgy-heatbar">
+                    <div class="control-group"><label>剖面索引</label><input type="number" class="config-input" id="profileIdx" value="0" min="0" style="width:120px;"></div>
+                    <span id="profileRange" style="color:var(--text-muted);font-size:0.875rem;"></span>
+                    <button class="btn btn-primary" id="loadHeatmapBtn">加载热力图</button>
+                </div>
+                <div id="heatmapContainer" class="sgy-heatmap-box">
+                    <div class="chart-placeholder">加载热力图后在此显示...</div>
+                </div>
+                <div id="heatmapInfo" style="text-align:center;margin-top:var(--spacing-sm);color:var(--text-muted);font-size:0.875rem;"></div>
+            </section>
+
+            <!-- Step 2: Waveform -->
+            <section class="content-section" id="sgyStep2">
+                <header class="section-header">
+                    <h1 class="section-title">单道波形</h1>
+                    <p class="section-desc" id="waveformDesc">点击热力图中任意道查看该道的振幅波形</p>
+                </header>
+                <div class="sgy-heatbar">
+                    <div class="control-group"><label>道索引</label><input type="number" class="config-input" id="traceIdx" value="0" min="0" style="width:120px;"></div>
+                    <span id="traceRange" style="color:var(--text-muted);font-size:0.875rem;"></span>
+                    <button class="btn btn-primary" id="drawWaveBtn">绘制波形</button>
+                </div>
+                <div id="waveformContainer" class="sgy-heatmap-box" style="min-height:300px;">
+                    <div class="chart-placeholder">加载热力图后，点击某道或输入道号绘制波形...</div>
+                </div>
+                <div id="waveformInfo" style="text-align:center;margin-top:var(--spacing-sm);color:var(--text-muted);font-size:0.875rem;"></div>
+            </section>
+
+            <!-- Step 3: Bit Statistics -->
+            <section class="content-section" id="sgyStep3">
+                <header class="section-header">
+                    <h1 class="section-title">浮点位统计分析</h1>
+                    <p class="section-desc">全文件扫描，统计指数位分布、熵值与空间特征</p>
+                </header>
+                <div class="sgy-heatbar">
+                    <div class="gs-tabs">
+                        <button class="gs-tab-btn active" id="tabExponent" onclick="switchBitTab('exponent')">指数位</button>
+                        <button class="gs-tab-btn" id="tabSign" onclick="switchBitTab('sign')">符号位</button>
+                        <button class="gs-tab-btn" id="tabMantissa" onclick="switchBitTab('mantissa')">尾数位</button>
+                    </div>
+                    <span id="bitStatStatus" style="color:var(--text-muted);font-size:0.875rem;">点击按钮开始全文件位统计</span>
+                    <button class="btn btn-primary" id="runBitStatsBtn">运行统计</button>
+                </div>
+                <div id="bitStatsContainer">
+                    <div class="chart-placeholder">运行统计后在此显示结果...</div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">处理中...</div>
+    </div>
+
+    <script src="js/utils.js?v=9"></script>
+    <script src="js/api.js?v=9"></script>
+    <script src="js/navigation.js?v=9"></script>
+    <script src="js/sgy-viewer.js?v=9"></script>
+</body>
+</html>

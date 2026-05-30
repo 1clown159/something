@@ -1,0 +1,120 @@
+{
+  "manifest": "E:\\code\\thesis\\20260420\\postdata\\postdata_blocks_manifest.json",
+  "checkpoint_path": "E:\\code\\thesis\\20260420\\postdata\\outputs_postdata_smoke_check\\stage4\\causal\\checkpoint.pt",
+  "split_mode": "heldout",
+  "roundtrip_split": "test",
+  "codec_layout": "global_diag",
+  "limits": {
+    "limit_profiles": 1,
+    "limit_traces": 4,
+    "limit_samples": 8
+  },
+  "segment_count": 1,
+  "ok": true,
+  "total_encoded_bytes": 469,
+  "total_voxels": 32,
+  "bits_per_voxel": 117.25,
+  "results": [
+    {
+      "segment": {
+        "segment_id": "b0000_p0000_0349_t0000_0599_test_p0315_0349",
+        "split": "test",
+        "block_id": "b0000_p0000_0349_t0000_0599",
+        "local_profile_start": 315,
+        "profiles": 35,
+        "profile_start": 315,
+        "profile_end": 349,
+        "shape": [
+          35,
+          600,
+          2001
+        ],
+        "dat_path": "E:\\code\\thesis\\experiments\\dat\\PostData-for-training.sgy.dat",
+        "byte_offset": 0,
+        "block_shape": [
+          350,
+          600,
+          2001
+        ]
+      },
+      "ok": true,
+      "shape": [
+        1,
+        4,
+        8
+      ],
+      "source_segment_shape": [
+        35,
+        600,
+        2001
+      ],
+      "encoded_bytes": 469,
+      "bits_per_voxel": 117.25,
+      "encode": {
+        "bitstream_path": "E:\\code\\thesis\\20260420\\postdata\\outputs_postdata_smoke_check_roundtrip\\postdata_test_global_diag_bitstreams\\0000_b0000_p0000_0349_t0000_0599_test_p0315_0349.s4rc",
+        "payload_bytes": 34,
+        "header_bytes": 435,
+        "total_bytes": 469,
+        "bits_per_voxel": 117.25,
+        "bits_per_modeled_voxel": 117.25,
+        "bits_per_total_voxel": 117.25,
+        "feature_mode": "diagonal_causal_edge",
+        "target_mode": "residual",
+        "codec_layout": "global_diag",
+        "encode_schedule": "profile_global_diagonal_batch",
+        "timing": {
+          "patch_build_seconds": 0.0,
+          "model_inference_seconds": 0.0,
+          "cdf_quantization_seconds": 0.0,
+          "range_coder_seconds": 0.0,
+          "total_wall_seconds": 0.37827000000106636,
+          "voxel_count": 0.0,
+          "inference_batch": 16.0,
+          "seconds_per_voxel": 0.0,
+          "patch_build_us_per_voxel": 0.0,
+          "model_inference_us_per_voxel": 0.0,
+          "cdf_quantization_us_per_voxel": 0.0,
+          "range_coder_us_per_voxel": 0.0,
+          "other_overhead_seconds": 0.37827000000106636
+        }
+      },
+      "header": {
+        "checkpoint_sha256": "38e7c76344717591b44b969c9a26730279350b750f1c390ae9f946df9ce11d2b",
+        "codec": "stage4_causal_range_global_diag",
+        "encode_schedule": "profile_global_diagonal_batch",
+        "feature_mode": "diagonal_causal_edge",
+        "patch_shape": [
+          9,
+          17
+        ],
+        "predictor": "loco_i_2d_global_diag",
+        "shape": [
+          1,
+          4,
+          8
+        ],
+        "target_mode": "residual",
+        "total_freq": 32768,
+        "total_volume_voxels": 32,
+        "valid_region": null,
+        "voxel_count": 32,
+        "timing": {
+          "patch_build_seconds": 0.0,
+          "model_inference_seconds": 0.0,
+          "cdf_quantization_seconds": 0.0,
+          "range_coder_seconds": 0.0,
+          "total_wall_seconds": 0.023513000000093598,
+          "voxel_count": 0.0,
+          "inference_batch": 16.0,
+          "seconds_per_voxel": 0.0,
+          "patch_build_us_per_voxel": 0.0,
+          "model_inference_us_per_voxel": 0.0,
+          "cdf_quantization_us_per_voxel": 0.0,
+          "range_coder_us_per_voxel": 0.0,
+          "other_overhead_seconds": 0.023513000000093598
+        },
+        "decode_schedule": "profile_global_diagonal_batch"
+      }
+    }
+  ]
+}

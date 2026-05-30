@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>压缩工具 | Stage4</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/variables.css?v=2">
+    <link rel="stylesheet" href="css/layout.css?v=2">
+    <link rel="stylesheet" href="css/components.css?v=2">
+    <link rel="stylesheet" href="css/compress.css?v=2">
+</head>
+<body>
+    <div class="bg-animation">
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+        <div class="gradient-orb orb-3"></div>
+    </div>
+
+    <nav class="top-nav">
+        <div class="nav-brand">
+            <div class="logo">
+                <a href="index.html" style="display:flex;align-items:center;gap:var(--spacing-xs);text-decoration:none;color:inherit;">
+                    <span class="logo-icon">◈</span>
+                    <span class="logo-text">Stage4</span>
+                </a>
+            </div>
+            <span class="nav-tagline">压缩工具</span>
+        </div>
+        <div class="nav-links">
+            <a href="index.html" class="nav-link">首页</a>
+            <a href="demo.html" class="nav-link">算法演示</a>
+            <a href="general-compress.html" class="nav-link">通用压缩</a>
+            <a href="sgy-viewer.html" class="nav-link">SEG-Y 查看</a>
+        </div>
+    </nav>
+
+    <main class="main-container">
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">工作流程</h3>
+                <nav class="step-nav">
+                    <button class="step-btn active" data-step="0">
+                        <span class="step-number">01</span>
+                        <span class="step-label">数据上传</span>
+                    </button>
+                    <button class="step-btn disabled" data-step="1">
+                        <span class="step-number">02</span>
+                        <span class="step-label">执行压缩</span>
+                    </button>
+                    <button class="step-btn disabled" data-step="2">
+                        <span class="step-number">03</span>
+                        <span class="step-label">结果分析</span>
+                    </button>
+                </nav>
+            </div>
+
+            <div class="sidebar-section task-info" id="taskInfo" style="display: none;">
+                <h3 class="sidebar-title">当前任务</h3>
+                <div class="task-card">
+                    <div class="task-id" id="displayTaskId">-</div>
+                    <div class="task-file" id="displayTaskFile">-</div>
+                    <div class="task-meta">
+                        <span class="task-size" id="displayTaskSize">-</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <div class="content-area">
+            <!-- Step 1: Upload -->
+            <section class="content-section active" id="step0">
+                <header class="section-header">
+                    <h1 class="section-title">数据上传</h1>
+                    <p class="section-desc" id="uploadDesc">上传需要压缩的地震数据文件（.sgy / .segy / .bin / .dat）</p>
+                    <div class="mode-toggle" id="modeToggle">
+                        <button class="mode-btn active" data-mode="compress">压缩</button>
+                        <button class="mode-btn" data-mode="decompress">解压</button>
+                    </div>
+                </header>
+
+                <div class="upload-zone" id="uploadZone">
+                    <div class="upload-content">
+                        <div class="upload-icon-large">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="17 8 12 3 7 8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                        </div>
+                        <h3 class="upload-title">拖拽文件到此处</h3>
+                        <p class="upload-subtitle">或点击选择文件</p>
+                        <div class="upload-formats" id="uploadFormats">
+                            <span class="format-tag">.sgy</span>
+                            <span class="format-tag">.segy</span>
+                            <span class="format-tag">.bin</span>
+                            <span class="format-tag">.dat</span>
+                        </div>
+                        <input type="file" id="fileInput" accept=".sgy,.segy,.bin,.dat,.raw" hidden>
+                        <button class="btn btn-primary btn-large" onclick="document.getElementById('fileInput').click()">
+                            选择文件
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 解压模式：辅助文件上传 -->
+                <div class="decompress-aux" id="decompressAux" style="display:none;">
+                    <div class="aux-section">
+                        <h4>辅助文件 (可选)</h4>
+                        <p class="aux-desc">上传压缩时保存的 sign.zlib 和 mant.zlib 可恢复完整 float32 数据</p>
+                        <div class="aux-grid">
+                            <div class="aux-item">
+                                <label class="aux-label">sign.zlib</label>
+                                <input type="file" id="signFileInput" accept=".zlib" hidden>
+                                <button class="btn btn-outline btn-sm" onclick="document.getElementById('signFileInput').click()">
+                                    + 选择文件
+                                </button>
+                                <span class="aux-name" id="signFileName">未选择</span>
+                            </div>
+                            <div class="aux-item">
+                                <label class="aux-label">mant.zlib</label>
+                                <input type="file" id="mantFileInput" accept=".zlib" hidden>
+                                <button class="btn btn-outline btn-sm" onclick="document.getElementById('mantFileInput').click()">
+                                    + 选择文件
+                                </button>
+                                <span class="aux-name" id="mantFileName">未选择</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="file-panel" id="filePanel" style="display: none;">
+                    <div class="file-card">
+                        <div class="file-icon">📄</div>
+                        <div class="file-details">
+                            <div class="file-name" id="fileName">-</div>
+                            <div class="file-info-row">
+                                <span class="file-size" id="fileSize">-</span>
+                                <span class="file-dimensions" id="fileDimensions">-</span>
+                            </div>
+                        </div>
+                        <div class="file-actions">
+                            <button class="btn btn-ghost btn-sm" id="removeFileBtn">移除</button>
+                            <button class="btn btn-primary btn-sm" id="continueToCompress">继续 →</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Step 2: Compress / Decompress -->
+            <section class="content-section" id="step1">
+                <header class="section-header">
+                    <h1 class="section-title" id="step1Title">执行压缩</h1>
+                    <p class="section-desc" id="step1Desc">配置参数并启动压缩任务</p>
+                </header>
+
+                <div class="compress-layout">
+                    <div class="config-panel" id="compressConfig">
+                        <h3 class="panel-title">压缩参数</h3>
+                        <div class="config-grid">
+                            <div class="config-item">
+                                <label class="config-label">特征模式</label>
+                                <select class="config-select" id="featureMode">
+                                    <option value="diagonal_causal_edge" selected>对角因果边缘</option>
+                                    <option value="causal_edge">因果边缘</option>
+                                </select>
+                                <span class="help-text">推荐：对角因果边缘</span>
+                            </div>
+                            <div class="config-item">
+                                <label class="config-label">目标模式</label>
+                                <select class="config-select" id="targetMode">
+                                    <option value="residual" selected>残差值 (推荐)</option>
+                                    <option value="raw">原始值</option>
+                                </select>
+                                <span class="help-text">需与模型检查点匹配</span>
+                            </div>
+                            <div class="config-item">
+                                <label class="config-label">Patch 高度</label>
+                                <input type="number" class="config-input" id="patchH" value="9" min="3" max="21" step="2">
+                            </div>
+                            <div class="config-item">
+                                <label class="config-label">Patch 宽度</label>
+                                <input type="number" class="config-input" id="patchW" value="17" min="3" max="33" step="2">
+                            </div>
+                            <div class="config-item">
+                                <label class="config-label">批次大小</label>
+                                <input type="number" class="config-input" id="inferenceBatch" value="8192" min="1" max="32768">
+                                <span class="help-text">越大越快，GPU 推荐 4096-16384</span>
+                            </div>
+                            <div class="config-item">
+                                <label class="config-label">计算设备</label>
+                                <select class="config-select" id="computeDevice">
+                                    <option value="cuda">GPU (CUDA)</option>
+                                    <option value="cpu">CPU</option>
+                                </select>
+                                <span class="help-text">GPU 可提速 10-50x</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary btn-full btn-large" id="startCompressBtn">
+                            <span class="btn-icon">▶</span> 开始压缩
+                        </button>
+                    </div>
+
+                    <div class="config-panel" id="decompressConfig" style="display:none;">
+                        <h3 class="panel-title">解压参数</h3>
+                        <p class="help-text" style="margin-bottom:var(--spacing-md);">上传 .s4rc 文件即可解压。可选上传 sign.zlib 和 mant.zlib 恢复完整数据。</p>
+                        <button class="btn btn-primary btn-full btn-large" id="startDecompressBtn">
+                            <span class="btn-icon">▶</span> 开始解压
+                        </button>
+                    </div>
+
+                    <div class="progress-panel">
+                        <h3 class="panel-title" id="progressTitle">压缩进度</h3>
+                        <div class="progress-ring-container">
+                            <svg class="progress-ring" viewBox="0 0 120 120">
+                                <defs>
+                                    <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" style="stop-color:#667eea"/>
+                                        <stop offset="100%" style="stop-color:#764ba2"/>
+                                    </linearGradient>
+                                </defs>
+                                <circle class="progress-ring-bg" cx="60" cy="60" r="54"/>
+                                <circle class="progress-ring-fill" id="progressRingFill" cx="60" cy="60" r="54"/>
+                            </svg>
+                            <div class="progress-center">
+                                <span class="progress-percent" id="progressPercent">0%</span>
+                                <span class="progress-status" id="progressStatus">等待开始</span>
+                            </div>
+                        </div>
+                        <div class="progress-stats" id="progressStats">
+                            <div class="stat-row">
+                                <span class="stat-label">已处理</span>
+                                <span class="stat-value" id="processedVoxels">0 / 0 voxels</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">预计剩余时间</span>
+                                <span class="stat-value" id="etaTime">-</span>
+                            </div>
+                        </div>
+                        <div class="log-terminal" id="compressLog">
+                            <div class="log-line log-info">系统就绪，等待开始压缩...</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Step 3: Results -->
+            <section class="content-section" id="step2">
+                <header class="section-header">
+                    <h1 class="section-title" id="step2Title">结果分析</h1>
+                    <p class="section-desc" id="step2Desc">查看压缩统计与文件对比</p>
+                </header>
+
+                <div class="analysis-grid">
+                    <div class="analysis-card stats-card" id="statsCard">
+                        <h3 class="card-title" id="statsTitle">压缩统计</h3>
+                        <div class="stats-comparison">
+                            <div class="size-bar-container">
+                                <div class="size-label">原始大小</div>
+                                <div class="size-bar-wrapper">
+                                    <div class="size-bar original" id="originalSizeBar"></div>
+                                    <span class="size-text" id="originalSizeText">-</span>
+                                </div>
+                            </div>
+                            <div class="size-arrow">→</div>
+                            <div class="size-bar-container">
+                                <div class="size-label">压缩后</div>
+                                <div class="size-bar-wrapper">
+                                    <div class="size-bar compressed" id="compressedSizeBar"></div>
+                                    <span class="size-text" id="compressedSizeText">-</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ratio-display">
+                            <span class="ratio-value" id="compressionRatio">-</span>
+                            <span class="ratio-label">压缩比</span>
+                        </div>
+                        <div class="stats-grid">
+                            <div class="stat-box">
+                                <span class="stat-box-value" id="bitsPerVoxel">-</span>
+                                <span class="stat-box-label">bits/voxel</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="stat-box-value" id="totalVoxels">-</span>
+                                <span class="stat-box-label">总像素数</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="stat-box-value" id="compressTime">-</span>
+                                <span class="stat-box-label">用时(秒)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="analysis-card action-card">
+                        <h3 class="card-title">操作</h3>
+                        <div class="action-buttons">
+                            <button class="btn btn-secondary btn-full" id="downloadResultBtn">
+                                ⬇ 下载压缩结果 (.s4rc)
+                            </button>
+                            <button class="btn btn-secondary btn-full" id="decompressBtn">
+                                🔄 解压验证
+                            </button>
+                            <button class="btn btn-primary btn-full" id="newTaskBtn">
+                                + 新建任务
+                            </button>
+                        </div>
+                        <div class="log-terminal" id="resultLog" style="margin-top:var(--spacing-md);height:120px;">
+                            <div class="log-line log-info">压缩完成后此处显示验证日志...</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">处理中...</div>
+    </div>
+
+    <script src="js/utils.js?v=2"></script>
+    <script src="js/state.js?v=2"></script>
+    <script src="js/api.js?v=2"></script>
+    <script src="js/navigation.js?v=2"></script>
+    <script src="js/compress-app.js?v=2"></script>
+</body>
+</html>

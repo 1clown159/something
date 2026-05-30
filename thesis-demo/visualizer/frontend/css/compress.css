@@ -1,0 +1,146 @@
+/* Compress Page Styles - Light Theme */
+
+/* ===== Mode Toggle ===== */
+.mode-toggle {
+    display: flex;
+    gap: var(--spacing-xs);
+    margin-top: var(--spacing-md);
+}
+.mode-btn {
+    padding: 6px 20px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    background: var(--bg-card);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.mode-btn.active {
+    background: var(--primary-color);
+    color: #fff;
+    border-color: var(--primary-color);
+}
+.mode-btn:hover:not(.active) {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+/* ===== Decompress Aux Files ===== */
+.decompress-aux {
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border-color);
+}
+.aux-desc {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: var(--spacing-sm);
+}
+.aux-grid {
+    display: flex;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+}
+.aux-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+.aux-label {
+    font-weight: 500;
+    font-size: 0.85rem;
+    min-width: 60px;
+}
+.aux-name {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* ===== Upload Zone ===== */
+.upload-zone {
+    border: 2px dashed var(--border-color);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-xl);
+    text-align: center;
+    background: var(--bg-card);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+.upload-zone:hover { border-color: var(--primary-color); background: rgba(91,106,240,0.04); }
+.upload-zone.dragover { border-color: var(--success); background: rgba(16,185,129,0.06); }
+.upload-content { display: flex; flex-direction: column; align-items: center; gap: var(--spacing-md); }
+.upload-icon-large { color: var(--text-muted); }
+.upload-title { font-size: 1.25rem; font-weight: 600; }
+.upload-subtitle { color: var(--text-muted); }
+.upload-formats { display: flex; gap: var(--spacing-xs); margin: var(--spacing-sm) 0; }
+
+/* ===== File Panel ===== */
+.file-panel { margin-top: var(--spacing-lg); }
+.file-card { display: flex; align-items: center; gap: var(--spacing-md); padding: var(--spacing-md); background: var(--bg-elevated); border: 1px solid var(--border-color); border-radius: var(--radius-md); }
+.file-icon { font-size: 2rem; }
+.file-details { flex: 1; }
+.file-name { font-weight: 600; margin-bottom: 0.25rem; }
+.file-info-row { display: flex; gap: var(--spacing-md); font-size: 0.875rem; color: var(--text-muted); }
+.file-actions { display: flex; gap: var(--spacing-sm); }
+
+/* ===== Compress Layout ===== */
+.compress-layout { display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-lg); }
+
+/* ===== Progress Stats ===== */
+.progress-stats { margin-bottom: var(--spacing-lg); }
+
+/* ===== Analysis Grid ===== */
+.analysis-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--spacing-lg); }
+.analysis-card {
+    background: var(--bg-card);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+}
+
+/* ===== Size Comparison ===== */
+.stats-comparison { margin-bottom: var(--spacing-lg); }
+.size-bar-container { margin-bottom: var(--spacing-md); }
+.size-label { font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+.size-bar-wrapper { display: flex; align-items: center; gap: var(--spacing-sm); }
+.size-bar { height: 24px; border-radius: var(--radius-sm); transition: width 0.5s ease; }
+.size-bar.original { background: #e8e8ec; border: 1px solid var(--border-color); }
+.size-bar.compressed { background: var(--primary-gradient); }
+.size-text { font-family: 'JetBrains Mono', monospace; font-size: 0.875rem; white-space: nowrap; }
+.size-arrow { text-align: center; color: var(--text-muted); font-size: 1.5rem; margin: var(--spacing-sm) 0; }
+
+/* ===== Ratio Display ===== */
+.ratio-display { text-align: center; padding: var(--spacing-lg); background: #f8f9fb; border-radius: var(--radius-md); margin-bottom: var(--spacing-lg); }
+.ratio-value {
+    display: block; font-size: 3rem; font-weight: 700;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.ratio-label { color: var(--text-muted); font-size: 0.875rem; }
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--spacing-md); }
+
+/* ===== Chart Containers ===== */
+.prob-chart-container, .cdf-chart-container {
+    height: 200px;
+    background: #f8f9fb;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--spacing-md);
+}
+.prob-legend { display: flex; gap: var(--spacing-md); justify-content: center; }
+
+/* ===== Action Buttons ===== */
+.action-buttons { display: flex; flex-direction: column; gap: var(--spacing-sm); }
+
+/* ===== Responsive ===== */
+@media (max-width: 1024px) {
+    .compress-layout { grid-template-columns: 1fr; }
+    .analysis-grid { grid-template-columns: 1fr; }
+}

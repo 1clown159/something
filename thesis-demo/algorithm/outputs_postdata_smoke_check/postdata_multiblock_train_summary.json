@@ -1,0 +1,248 @@
+{
+  "stage": "stage4",
+  "mode": "postdata_multiblock",
+  "device": "cpu",
+  "manifest": "E:\\code\\thesis\\20260420\\postdata\\postdata_blocks_manifest.json",
+  "split_mode": "heldout",
+  "val_ranges": [
+    [
+      280,
+      314
+    ]
+  ],
+  "test_ranges": [
+    [
+      315,
+      349
+    ]
+  ],
+  "config": {
+    "seed": 20260420,
+    "patch_shape": [
+      9,
+      17
+    ],
+    "tile_shape": [
+      64,
+      64
+    ],
+    "stage4_train_samples": 32,
+    "stage4_val_samples": 8,
+    "stage4_eval_samples": 32000,
+    "stage4_base_channels": 2,
+    "batch_size": 8,
+    "epochs_stage4": 1,
+    "learning_rate": 0.001,
+    "weight_decay": 0.0001,
+    "num_workers": 0,
+    "eval_trace_stride": 4,
+    "eval_sample_stride": 8,
+    "output_dir": "E:\\code\\thesis\\20260420\\postdata\\outputs_postdata_smoke_check",
+    "range_total": 32768,
+    "codec_device": "cpu",
+    "feature_mode": "diagonal_causal_edge",
+    "target_mode": "residual",
+    "valid_region_mode": "none",
+    "valid_region_min_nonzero_ratio": 0.0,
+    "valid_region_margin_traces": 0,
+    "valid_region_group_size": 1
+  },
+  "split_summary": {
+    "train": {
+      "segment_count": 1,
+      "profiles": 280,
+      "voxels": 336168000,
+      "profile_ranges": [
+        [
+          0,
+          279
+        ]
+      ],
+      "segments": [
+        {
+          "segment_id": "b0000_p0000_0349_t0000_0599_train_p0000_0279",
+          "split": "train",
+          "block_id": "b0000_p0000_0349_t0000_0599",
+          "local_profile_start": 0,
+          "profiles": 280,
+          "profile_start": 0,
+          "profile_end": 279,
+          "shape": [
+            280,
+            600,
+            2001
+          ],
+          "dat_path": "E:\\code\\thesis\\experiments\\dat\\PostData-for-training.sgy.dat",
+          "byte_offset": 0,
+          "block_shape": [
+            350,
+            600,
+            2001
+          ]
+        }
+      ]
+    },
+    "val": {
+      "segment_count": 1,
+      "profiles": 35,
+      "voxels": 42021000,
+      "profile_ranges": [
+        [
+          280,
+          314
+        ]
+      ],
+      "segments": [
+        {
+          "segment_id": "b0000_p0000_0349_t0000_0599_val_p0280_0314",
+          "split": "val",
+          "block_id": "b0000_p0000_0349_t0000_0599",
+          "local_profile_start": 280,
+          "profiles": 35,
+          "profile_start": 280,
+          "profile_end": 314,
+          "shape": [
+            35,
+            600,
+            2001
+          ],
+          "dat_path": "E:\\code\\thesis\\experiments\\dat\\PostData-for-training.sgy.dat",
+          "byte_offset": 0,
+          "block_shape": [
+            350,
+            600,
+            2001
+          ]
+        }
+      ]
+    },
+    "test": {
+      "segment_count": 1,
+      "profiles": 35,
+      "voxels": 42021000,
+      "profile_ranges": [
+        [
+          315,
+          349
+        ]
+      ],
+      "segments": [
+        {
+          "segment_id": "b0000_p0000_0349_t0000_0599_test_p0315_0349",
+          "split": "test",
+          "block_id": "b0000_p0000_0349_t0000_0599",
+          "local_profile_start": 315,
+          "profiles": 35,
+          "profile_start": 315,
+          "profile_end": 349,
+          "shape": [
+            35,
+            600,
+            2001
+          ],
+          "dat_path": "E:\\code\\thesis\\experiments\\dat\\PostData-for-training.sgy.dat",
+          "byte_offset": 0,
+          "block_shape": [
+            350,
+            600,
+            2001
+          ]
+        }
+      ]
+    }
+  },
+  "train_sample_count": 32,
+  "val_sample_count": 8,
+  "materialize_features": false,
+  "materialized_shapes": null,
+  "train_allocation": [
+    {
+      "segment_id": "b0000_p0000_0349_t0000_0599_train_p0000_0279",
+      "split": "train",
+      "profile_range": [
+        0,
+        279
+      ],
+      "shape": [
+        280,
+        600,
+        2001
+      ],
+      "voxel_count": 336168000,
+      "sample_count": 32
+    }
+  ],
+  "val_allocation": [
+    {
+      "segment_id": "b0000_p0000_0349_t0000_0599_val_p0280_0314",
+      "split": "val",
+      "profile_range": [
+        280,
+        314
+      ],
+      "shape": [
+        35,
+        600,
+        2001
+      ],
+      "voxel_count": 42021000,
+      "sample_count": 8
+    }
+  ],
+  "training": {
+    "history": [
+      {
+        "epoch": 1,
+        "train_loss": 5.633688569068909,
+        "train_accuracy": 0.0,
+        "val_loss": 5.689915657043457,
+        "val_accuracy": 0.0
+      }
+    ],
+    "best_val_loss": 5.689915657043457,
+    "train_metrics": {
+      "loss": 5.633688569068909,
+      "accuracy_top1": 0.0
+    },
+    "val_metrics": {
+      "loss": 5.689915657043457,
+      "accuracy_top1": 0.0,
+      "accuracy_top5": 0.0
+    }
+  },
+  "benchmark": {
+    "lossless_compatible": true,
+    "evaluated_voxels": 8,
+    "total_voxels": 42021000,
+    "average_nll_bits": 8.296209181216716,
+    "perplexity": 314.3459098511572,
+    "ideal_code_length_bits": 66.36967344973372,
+    "proxy_size_bytes": 43576876,
+    "argmax_error_rate": 1.0,
+    "accuracy_top1": 0.0,
+    "accuracy_top5": 0.0,
+    "interpretation": "sampled exponent NLL estimate, not a real range-coded bitstream",
+    "split": "test",
+    "target_mode": "residual",
+    "feature_mode": "diagonal_causal_edge",
+    "benchmark_sample_count": 8
+  },
+  "benchmark_allocation": [
+    {
+      "segment_id": "b0000_p0000_0349_t0000_0599_test_p0315_0349",
+      "split": "test",
+      "profile_range": [
+        315,
+        349
+      ],
+      "shape": [
+        35,
+        600,
+        2001
+      ],
+      "voxel_count": 42021000,
+      "sample_count": 8
+    }
+  ],
+  "checkpoint_path": "E:\\code\\thesis\\20260420\\postdata\\outputs_postdata_smoke_check\\stage4\\causal\\checkpoint.pt"
+}

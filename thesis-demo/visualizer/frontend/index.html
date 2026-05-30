@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>Stage4 | 智能数据压缩平台</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/variables.css?v=2">
+    <link rel="stylesheet" href="css/layout.css?v=2">
+    <link rel="stylesheet" href="css/components.css?v=2">
+    <link rel="stylesheet" href="css/landing.css?v=2">
+</head>
+<body>
+    <div class="bg-animation">
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+        <div class="gradient-orb orb-3"></div>
+    </div>
+
+    <nav class="top-nav">
+        <div class="nav-brand">
+            <div class="logo">
+                <span class="logo-icon">◈</span>
+                <span class="logo-text">Stage4</span>
+            </div>
+            <span class="nav-tagline">智能数据压缩平台</span>
+        </div>
+        <div class="nav-links">
+            <a href="compress.html" class="nav-link">压缩工具</a>
+            <a href="demo.html" class="nav-link">算法演示</a>
+            <a href="general-compress.html" class="nav-link">通用压缩</a>
+            <a href="sgy-viewer.html" class="nav-link">SEG-Y 查看</a>
+        </div>
+    </nav>
+
+    <main class="landing-main">
+        <div class="hero-section">
+            <h1 class="hero-title">
+                <span class="hero-icon">◈</span>
+                Stage4 智能数据压缩
+            </h1>
+            <p class="hero-desc">基于深度学习因果预测的无损浮点数据压缩算法</p>
+        </div>
+
+        <div class="entry-cards">
+            <a href="compress.html" class="entry-card compress-card">
+                <div class="entry-card-bg"></div>
+                <div class="entry-card-icon">🗜️</div>
+                <h2 class="entry-card-title">压缩工具</h2>
+                <p class="entry-card-desc">
+                    上传数据文件，配置压缩参数，实时查看<br>
+                    压缩进度与统计结果，下载压缩码流
+                </p>
+                <ul class="entry-features">
+                    <li>支持 .bin / .dat / .raw 格式</li>
+                    <li>实时压缩进度与日志</li>
+                    <li>压缩比 / 码率等统计</li>
+                    <li>无损解压验证</li>
+                </ul>
+                <span class="entry-btn">进入工具 →</span>
+            </a>
+
+            <a href="demo.html" class="entry-card demo-card">
+                <div class="entry-card-bg"></div>
+                <div class="entry-card-icon">🔬</div>
+                <h2 class="entry-card-title">算法演示</h2>
+                <p class="entry-card-desc">
+                    沉浸式 3D 可视化引擎，六步拆解<br>
+                    Stage4 压缩算法全流程，WebGL 实时渲染
+                </p>
+                <ul class="entry-features">
+                    <li>3D Bit 晶体阵列拆解</li>
+                    <li>体素扫描场 & 概率剧场</li>
+                    <li>Range Coding 隧道动画</li>
+                    <li>压缩汇总反应堆仪表盘</li>
+                </ul>
+                <span class="entry-btn">进入演示 →</span>
+            </a>
+
+            <a href="general-compress.html" class="entry-card general-card">
+                <div class="entry-card-bg"></div>
+                <div class="entry-card-icon">📦</div>
+                <h2 class="entry-card-title">通用压缩</h2>
+                <p class="entry-card-desc">
+                    对比四种经典压缩算法的表现差异，<br>
+                    支持文本对比与文件压缩两种模式
+                </p>
+                <ul class="entry-features">
+                    <li>LZ77+RLE+Deflate+Neural</li>
+                    <li>文本对比可视化结果</li>
+                    <li>文件压缩与下载</li>
+                    <li>纯前端实现零依赖</li>
+                </ul>
+                <span class="entry-btn">进入工具 →</span>
+            </a>
+
+            <a href="sgy-viewer.html" class="entry-card sgy-card">
+                <div class="entry-card-bg"></div>
+                <div class="entry-card-icon">📡</div>
+                <h2 class="entry-card-title">SEG-Y 查看器</h2>
+                <p class="entry-card-desc">
+                    上传 SEG-Y 地震数据文件，自动解析<br>
+                    元数据并预览剖面热力图
+                </p>
+                <ul class="entry-features">
+                    <li>全文件自动扫描元数据</li>
+                    <li>Inline/Crossline 范围推断</li>
+                    <li>交互式剖面热力图</li>
+                    <li>IBM/IEEE 浮点自动识别</li>
+                </ul>
+                <span class="entry-btn">进入查看 →</span>
+            </a>
+        </div>
+    </main>
+
+    <script src="js/utils.js?v=2"></script>
+    <script src="js/landing.js?v=2"></script>
+</body>
+</html>

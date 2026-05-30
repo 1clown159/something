@@ -1,0 +1,83 @@
+{
+  "value_count": 200000,
+  "raw_float32_bytes": 800000,
+  "settings": {
+    "zstd_level": 9,
+    "zstd_threads": 0,
+    "sign_rle_level": 3,
+    "lzma_preset": 6,
+    "chunk_values": 50000,
+    "limit_blocks": 1,
+    "limit_values": 200000,
+    "skip_bitshuffle": false,
+    "bitshuffle_mode": "auto",
+    "keep_temp": false
+  },
+  "sign": {
+    "best_bytes": 11476,
+    "best_method": "rle_lengths+lzma",
+    "candidates": {
+      "bitpack+zstd": 19398,
+      "bitpack+lzma": 17744,
+      "rle_lengths+zstd": 14785,
+      "rle_lengths+lzma": 11476,
+      "rle_deltas+zstd": 22231,
+      "rle_deltas+lzma": 16740
+    },
+    "rle": {
+      "run_count": 45092,
+      "max_run": 27,
+      "first_run_length": 4,
+      "length_dtype": "uint8"
+    }
+  },
+  "mantissa": {
+    "whole_zstd_bytes": 586236,
+    "whole_zstd_method": "mantissa23_packed+zstd",
+    "pathL_lite_bytes": 553004,
+    "pathL_lite_method": "mid15_bitshuffle_zstd + hi4lo4_raw_zstd",
+    "pathL_lite_detail": {
+      "mid_bytes": 375018,
+      "mid_method": "mid15_bitshuffle_zstd",
+      "mid_candidates": {
+        "mid15_raw_u16_zstd": 395592,
+        "mid15_bytesplit_zstd": 375127,
+        "mid15_bitshuffle_zstd": 375018
+      },
+      "side_bytes": 177986,
+      "side_method": "hi4lo4_raw_zstd",
+      "side_candidates": {
+        "hi4lo4_raw_zstd": 177986,
+        "hi4lo4_bitshuffle_zstd": 186352
+      }
+    }
+  },
+  "combined_schemes": [
+    {
+      "scheme": "TUI predicted exp + sign-best + PathL-lite",
+      "sign_bytes": 11476,
+      "sign_method": "rle_lengths+lzma",
+      "exp_bytes": 30775.340365997978,
+      "exp_source": "average_nll_bits",
+      "mant_bytes": 553004,
+      "mant_method": "mid15_bitshuffle_zstd + hi4lo4_raw_zstd",
+      "total_bytes": 595255.340365998,
+      "bits_per_value": 23.81021361463992,
+      "compression_ratio_vs_float32": 1.3439610630088812,
+      "space_saving_ratio": 0.2559308245425025
+    },
+    {
+      "scheme": "TUI predicted exp + sign-best + mantissa-whole-zstd",
+      "sign_bytes": 11476,
+      "sign_method": "rle_lengths+lzma",
+      "exp_bytes": 30775.340365997978,
+      "exp_source": "average_nll_bits",
+      "mant_bytes": 586236,
+      "mant_method": "mantissa23_packed+zstd",
+      "total_bytes": 628487.340365998,
+      "bits_per_value": 25.139493614639917,
+      "compression_ratio_vs_float32": 1.2728975567497065,
+      "space_saving_ratio": 0.21439082454250258
+    }
+  ]
+}

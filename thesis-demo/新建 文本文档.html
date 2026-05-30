@@ -1,0 +1,1748 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stage4 Float32 Compression Visualizer</title>
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-panel: #162032;
+            --accent-cyan: #06b6d4;
+            --accent-pink: #ec4899;
+            --accent-amber: #f59e0b;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+            --bit-sign: #ef4444;
+            --bit-exp: #f59e0b;
+            --bit-mant: #06b6d4;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* 顶部导航 */
+        .top-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 24px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            height: 60px;
+        }
+
+        .logo {
+            font-size: 18px;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo::before {
+            content: "◈";
+            font-size: 24px;
+            -webkit-text-fill-color: var(--accent-cyan);
+        }
+
+        .step-tabs {
+            display: flex;
+            gap: 8px;
+        }
+
+        .step-tab {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-panel);
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .step-tab:hover {
+            border-color: var(--accent-cyan);
+            color: var(--text-primary);
+        }
+
+        .step-tab.active {
+            background: linear-gradient(135deg, var(--accent-cyan), #0891b2);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
+        }
+
+        /* 主体三栏布局 */
+        .main-container {
+            display: grid;
+            grid-template-columns: 280px 1fr 340px;
+            gap: 1px;
+            background: var(--border-color);
+            height: calc(100vh - 60px);
+        }
+
+        .panel {
+            background: var(--bg-primary);
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .panel-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-title::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: var(--border-color);
+            margin-left: 8px;
+        }
+
+        /* 左侧控制面板 */
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .control-select, .control-input {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .control-select:focus, .control-input:focus {
+            border-color: var(--accent-cyan);
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .slider-value {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: var(--accent-cyan);
+            min-width: 50px;
+            text-align: right;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--bg-secondary);
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent-cyan);
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+        }
+
+        .play-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 24px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-cyan), #0891b2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(6, 182, 212, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-pink);
+            color: var(--accent-pink);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .status-running {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-green);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-paused {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--accent-amber);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        /* 中央舞台 */
+        .stage {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-primary);
+            overflow: hidden;
+        }
+
+        .stage-header {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            z-index: 10;
+        }
+
+        .stage-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .stage-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        /* 右侧信息面板 */
+        .formula-box {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 14px;
+            font-family: 'Courier New', 'Consolas', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            color: var(--accent-cyan);
+            margin-bottom: 16px;
+            overflow-x: auto;
+        }
+
+        .formula-box .comment {
+            color: var(--text-secondary);
+        }
+
+        .formula-box .keyword {
+            color: var(--accent-pink);
+        }
+
+        .formula-box .string {
+            color: var(--accent-amber);
+        }
+
+        .info-text {
+            font-size: 13px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .metric-card {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 10px;
+            border-left: 3px solid var(--accent-cyan);
+        }
+
+        .metric-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .metric-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            font-family: 'Courier New', monospace;
+        }
+
+        .metric-unit {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-left: 4px;
+        }
+
+        .metric-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .metric-row .metric-card {
+            flex: 1;
+        }
+
+        /* 图例 */
+        .legend {
+            display: flex;
+            gap: 16px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+        }
+
+        /* 动画 */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-slide {
+            animation: slideIn 0.4s ease;
+        }
+
+        /* 滚动条 */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        /* 响应式 */
+        @media (max-width: 1200px) {
+            .main-container {
+                grid-template-columns: 240px 1fr 280px;
+            }
+        }
+    </style>
+<base target="_blank">
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <nav class="top-nav">
+        <div class="logo">Stage4 Float32 Compression</div>
+        <div class="step-tabs">
+            <div class="step-tab active" data-step="1">1. Bit 拆解</div>
+            <div class="step-tab" data-step="2">2. 特征提取</div>
+            <div class="step-tab" data-step="3">3. CNN 预测</div>
+            <div class="step-tab" data-step="4">4. Range Coding</div>
+            <div class="step-tab" data-step="5">5. Sign/Mantissa</div>
+            <div class="step-tab" data-step="6">6. 压缩汇总</div>
+        </div>
+    </nav>
+
+    <!-- 主体 -->
+    <div class="main-container">
+        <!-- 左侧控制面板 -->
+        <aside class="panel" id="left-panel">
+            <div class="panel-title">⚙️ 控制面板</div>
+
+            <div class="control-group">
+                <label class="control-label">数据集</label>
+                <select class="control-select" id="dataset-select">
+                    <option value="tui">TUI Block 3898 (350×600×2001)</option>
+                    <option value="postdata">PostData Profile 90-99</option>
+                    <option value="demo">Demo Synthetic Volume</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">Feature Mode</label>
+                <select class="control-select" id="feature-mode">
+                    <option value="diagonal_causal_edge" selected>diagonal_causal_edge ⭐</option>
+                    <option value="raster">raster</option>
+                    <option value="tile64">tile64</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">Target Mode</label>
+                <select class="control-select" id="target-mode">
+                    <option value="residual" selected>residual ⭐</option>
+                    <option value="raw">raw exponent</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">采样点索引 <span class="slider-value" id="sample-idx">0</span></label>
+                <div class="slider-container">
+                    <input type="range" id="sample-slider" min="0" max="999" value="0">
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">播放速度 <span class="slider-value" id="speed-val">50ms</span></label>
+                <div class="slider-container">
+                    <input type="range" id="speed-slider" min="10" max="500" value="50">
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">Patch 大小</label>
+                <select class="control-select" id="patch-size">
+                    <option value="17" selected>17 × 17</option>
+                    <option value="9">9 × 9</option>
+                    <option value="33">33 × 33</option>
+                </select>
+            </div>
+
+            <div class="play-controls">
+                <button class="btn btn-primary" id="btn-play">▶ 播放</button>
+                <button class="btn btn-secondary" id="btn-pause">⏸ 暂停</button>
+            </div>
+
+            <div style="margin-top: 16px;">
+                <span class="status-badge status-paused" id="status-badge">已暂停</span>
+            </div>
+
+            <div class="control-group" style="margin-top: 24px;">
+                <label class="control-label">当前坐标</label>
+                <div class="formula-box" style="font-size: 11px; padding: 10px;">
+                    Profile: <span id="coord-p">0</span><br>
+                    Trace: <span id="coord-t">0</span><br>
+                    Sample: <span id="coord-s">0</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 中央舞台 -->
+        <main class="stage panel" id="center-stage">
+            <div class="stage-header">
+                <div class="stage-title" id="stage-title">IEEE 754 Float32 Bit 解剖</div>
+                <div class="stage-subtitle" id="stage-subtitle">将 32-bit 浮点数拆解为 Sign / Exponent / Mantissa</div>
+            </div>
+            <div class="canvas-container" id="canvas-container">
+                <canvas id="main-canvas"></canvas>
+            </div>
+        </main>
+
+        <!-- 右侧信息面板 -->
+        <aside class="panel" id="right-panel">
+            <div class="panel-title">📐 原理与公式</div>
+            <div id="info-content">
+                <!-- 动态填充 -->
+            </div>
+
+            <div class="panel-title" style="margin-top: 24px;">📊 实时指标</div>
+            <div id="metrics-content">
+                <!-- 动态填充 -->
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        // ==========================================
+        // 全局状态管理
+        // ==========================================
+        const State = {
+            currentStep: 1,
+            isPlaying: false,
+            playInterval: null,
+            sampleIndex: 0,
+            speed: 50,
+            featureMode: 'diagonal_causal_edge',
+            targetMode: 'residual',
+            patchSize: 17,
+            dataset: 'tui',
+            // 模拟数据集
+            volumeShape: [350, 600, 2001],
+            // 当前处理的坐标
+            coord: { p: 0, t: 0, s: 0 },
+            // 模拟概率分布（256类）
+            probs: new Array(256).fill(0),
+            // Range coder 状态
+            rangeCoder: { low: 0, range: 1, bits: [] }
+        };
+
+        // 生成模拟概率分布（以某个点为中心的高斯分布）
+        function generateProbs(center) {
+            const probs = new Array(256).fill(0);
+            for (let i = 0; i < 256; i++) {
+                const dist = Math.abs(i - center);
+                probs[i] = Math.exp(-dist * dist / (2 * 15 * 15)) + Math.random() * 0.02;
+            }
+            // 归一化
+            const sum = probs.reduce((a, b) => a + b, 0);
+            return probs.map(p => p / sum);
+        }
+
+        // 生成模拟 float32 数据
+        function generateFloat32Data(idx) {
+            // 使用种子随机但确定性的方式生成
+            const seed = idx * 997;
+            const pseudoRandom = (n) => {
+                let x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
+                return x - Math.floor(x);
+            };
+
+            // 生成一个看起来像是地震数据的值
+            const sign = pseudoRandom(seed) > 0.5 ? 1 : 0;
+            const exp = Math.floor(pseudoRandom(seed + 1) * 40) + 110; // 集中在 110-150
+            const mant = Math.floor(pseudoRandom(seed + 2) * 0x7FFFFF);
+
+            // 计算实际 float 值
+            const value = (sign ? -1 : 1) * Math.pow(2, exp - 127) * (1 + mant / 0x800000);
+
+            return { sign, exp, mant, value };
+        }
+
+        // ==========================================
+        // 画布管理
+        // ==========================================
+        const canvas = document.getElementById('main-canvas');
+        const ctx = canvas.getContext('2d');
+        let canvasWidth, canvasHeight;
+
+        function resizeCanvas() {
+            const container = document.getElementById('canvas-container');
+            canvasWidth = container.clientWidth;
+            canvasHeight = container.clientHeight;
+            canvas.width = canvasWidth * window.devicePixelRatio;
+            canvas.height = canvasHeight * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+            canvas.style.width = canvasWidth + 'px';
+            canvas.style.height = canvasHeight + 'px';
+            renderCurrentStep();
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        // ==========================================
+        // 步骤 1: Float32 Bit 拆解
+        // ==========================================
+        function renderStep1() {
+            const data = generateFloat32Data(State.sampleIndex);
+            const bits = [];
+
+            // Sign bit
+            bits.push({ val: data.sign, type: 'sign', idx: 31 });
+            // Exponent bits
+            for (let i = 7; i >= 0; i--) {
+                bits.push({ val: (data.exp >> i) & 1, type: 'exp', idx: 23 + i });
+            }
+            // Mantissa bits
+            for (let i = 22; i >= 0; i--) {
+                bits.push({ val: (data.mant >> i) & 1, type: 'mant', idx: i });
+            }
+
+            const boxSize = Math.min(34, (canvasWidth - 80) / 32);
+            const startX = (canvasWidth - boxSize * 32 - 4 * 31) / 2;
+            const startY = canvasHeight / 2 - 60;
+
+            // 标题
+            ctx.font = 'bold 14px "Segoe UI", sans-serif';
+            ctx.fillStyle = '#94a3b8';
+            ctx.textAlign = 'center';
+            ctx.fillText(`Bit 31 (MSB) ←  → Bit 0 (LSB)`, canvasWidth / 2, startY - 30);
+
+            // 绘制 Bit 方块
+            bits.forEach((bit, i) => {
+                const x = startX + i * (boxSize + 4);
+                const y = startY;
+                const colors = {
+                    sign: '#ef4444',
+                    exp: '#f59e0b',
+                    mant: '#06b6d4'
+                };
+                const glowColors = {
+                    sign: 'rgba(239, 68, 68, 0.4)',
+                    exp: 'rgba(245, 158, 11, 0.4)',
+                    mant: 'rgba(6, 182, 212, 0.4)'
+                };
+
+                // 发光效果
+                ctx.shadowColor = glowColors[bit.type];
+                ctx.shadowBlur = bit.val ? 15 : 0;
+
+                // 背景
+                ctx.fillStyle = bit.val ? colors[bit.type] : '#1e293b';
+                ctx.strokeStyle = colors[bit.type];
+                ctx.lineWidth = 2;
+
+                ctx.beginPath();
+                ctx.roundRect(x, y, boxSize, boxSize * 1.3, 4);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.shadowBlur = 0;
+
+                // 文字
+                ctx.fillStyle = bit.val ? '#fff' : '#475569';
+                ctx.font = `bold ${boxSize * 0.5}px "Courier New", monospace`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(bit.val, x + boxSize / 2, y + boxSize * 0.45);
+
+                // 索引号
+                ctx.fillStyle = '#64748b';
+                ctx.font = `${boxSize * 0.25}px "Courier New", monospace`;
+                ctx.fillText(bit.idx, x + boxSize / 2, y + boxSize * 1.1);
+            });
+
+            // 分组标签
+            const signWidth = boxSize;
+            const expWidth = boxSize * 8 + 4 * 7;
+            const mantWidth = boxSize * 23 + 4 * 22;
+
+            ctx.font = '12px "Segoe UI", sans-serif';
+            ctx.textAlign = 'center';
+
+            // Sign label
+            ctx.fillStyle = '#ef4444';
+            ctx.fillText('Sign (1 bit)', startX + signWidth / 2, startY + boxSize * 1.8);
+
+            // Exponent label
+            ctx.fillStyle = '#f59e0b';
+            ctx.fillText('Exponent (8 bits)', startX + signWidth + 4 + expWidth / 2, startY + boxSize * 1.8);
+
+            // Mantissa label
+            ctx.fillStyle = '#06b6d4';
+            ctx.fillText('Mantissa (23 bits)', startX + signWidth + 4 + expWidth + 4 + mantWidth / 2, startY + boxSize * 1.8);
+
+            // 数值显示
+            const valY = startY + boxSize * 2.6;
+            ctx.font = 'bold 28px "Courier New", monospace';
+            ctx.fillStyle = '#f1f5f9';
+            ctx.fillText(data.value.toExponential(6), canvasWidth / 2, valY);
+
+            ctx.font = '13px "Segoe UI", sans-serif';
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText(`Sign: ${data.sign}    Exponent: ${data.exp} (biased)    Mantissa: ${data.mant}`, canvasWidth / 2, valY + 28);
+
+            // 公式
+            ctx.font = '14px "Courier New", monospace';
+            ctx.fillStyle = '#64748b';
+            ctx.fillText('value = (-1)^sign × 2^(exp-127) × 1.mantissa', canvasWidth / 2, valY + 56);
+
+            // 更新坐标显示
+            updateCoordDisplay(data);
+        }
+
+        // ==========================================
+        // 步骤 2: 3D 特征提取 (Causal Patch)
+        // ==========================================
+        let patchAngle = 0;
+
+        function renderStep2() {
+            patchAngle += 0.005;
+
+            const cx = canvasWidth / 2;
+            const cy = canvasHeight / 2;
+            const size = Math.min(canvasWidth, canvasHeight) * 0.35;
+
+            // 绘制 3D 体素网格（伪 3D）
+            const gridSize = 8;
+            const cellSize = size / gridSize;
+
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+            // 绘制体素块
+            for (let z = 0; z < gridSize; z++) {
+                for (let y = 0; y < gridSize; y++) {
+                    for (let x = 0; x < gridSize; x++) {
+                        // 3D 投影
+                        const px = cx + (x - gridSize/2) * cellSize * Math.cos(patchAngle) - (z - gridSize/2) * cellSize * Math.sin(patchAngle) * 0.5;
+                        const py = cy + (y - gridSize/2) * cellSize * 0.7 + (z - gridSize/2) * cellSize * 0.3;
+
+                        // 对角线因果区域判断
+                        const diagIdx = x + y + z;
+                        const currentDiag = (State.sampleIndex % (gridSize * 3));
+                        const isCausal = diagIdx < currentDiag;
+                        const isCurrent = diagIdx === currentDiag;
+                        const isFuture = diagIdx > currentDiag;
+
+                        let color, alpha;
+                        if (isCurrent) {
+                            color = '#ec4899';
+                            alpha = 1.0;
+                        } else if (isCausal) {
+                            color = '#06b6d4';
+                            alpha = 0.8;
+                        } else {
+                            color = '#334155';
+                            alpha = 0.3;
+                        }
+
+                        ctx.globalAlpha = alpha;
+                        ctx.fillStyle = color;
+
+                        const cs = cellSize * 0.7;
+                        ctx.beginPath();
+                        ctx.roundRect(px - cs/2, py - cs/2, cs, cs, 2);
+                        ctx.fill();
+
+                        if (isCurrent) {
+                            ctx.strokeStyle = '#fff';
+                            ctx.lineWidth = 2;
+                            ctx.stroke();
+                        }
+                    }
+                }
+            }
+            ctx.globalAlpha = 1.0;
+
+            // 绘制 17x17 Patch 示意图（右下角）
+            const patchX = canvasWidth - 220;
+            const patchY = canvasHeight - 220;
+            const patchCell = 10;
+            const patchRadius = 8;
+
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.roundRect(patchX - 10, patchY - 30, patchCell * 17 + 20, patchCell * 17 + 40, 8);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '11px "Segoe UI", sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('17×17 Causal Patch (profile-trace plane)', patchX, patchY - 14);
+
+            const center = 8;
+            for (let r = 0; r < 17; r++) {
+                for (let c = 0; c < 17; c++) {
+                    const dx = c - center;
+                    const dy = r - center;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const isCausalPatch = (dx < 0) || (dx === 0 && dy < 0) || (dx > 0 && dy < -dx);
+                    const isCenter = (r === center && c === center);
+
+                    const cellX = patchX + c * patchCell;
+                    const cellY = patchY + r * patchCell;
+
+                    if (isCenter) {
+                        ctx.fillStyle = '#ec4899';
+                        ctx.shadowColor = '#ec4899';
+                        ctx.shadowBlur = 10;
+                    } else if (isCausalPatch) {
+                        const intensity = 1 - dist / 12;
+                        ctx.fillStyle = `rgba(6, 182, 212, ${0.3 + intensity * 0.5})`;
+                        ctx.shadowBlur = 0;
+                    } else {
+                        ctx.fillStyle = '#1e293b';
+                        ctx.shadowBlur = 0;
+                    }
+
+                    ctx.fillRect(cellX, cellY, patchCell - 1, patchCell - 1);
+                    ctx.shadowBlur = 0;
+                }
+            }
+
+            // 图例
+            ctx.font = '11px "Segoe UI", sans-serif';
+            ctx.textAlign = 'left';
+            const legendY = patchY + patchCell * 17 + 16;
+
+            ctx.fillStyle = '#06b6d4';
+            ctx.fillRect(patchX, legendY, 10, 10);
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText('Causal (已编码)', patchX + 16, legendY + 9);
+
+            ctx.fillStyle = '#ec4899';
+            ctx.fillRect(patchX + 110, legendY, 10, 10);
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText('Current (当前点)', patchX + 126, legendY + 9);
+
+            // 坐标轴标签
+            ctx.save();
+            ctx.translate(cx - size * 0.6, cy + size * 0.5);
+            ctx.rotate(-Math.PI / 6);
+            ctx.fillStyle = '#64748b';
+            ctx.font = '12px "Segoe UI", sans-serif';
+            ctx.fillText('Profile →', 0, 0);
+            ctx.restore();
+
+            ctx.save();
+            ctx.translate(cx + size * 0.5, cy + size * 0.5);
+            ctx.rotate(Math.PI / 8);
+            ctx.fillStyle = '#64748b';
+            ctx.fillText('Trace →', 0, 0);
+            ctx.restore();
+
+            ctx.fillStyle = '#64748b';
+            ctx.fillText('Sample ↑', cx - 20, cy - size * 0.55);
+        }
+
+        // ==========================================
+        // 步骤 3: CNN 概率预测
+        // ==========================================
+        function renderStep3() {
+            const data = generateFloat32Data(State.sampleIndex);
+            const center = data.exp;
+            State.probs = generateProbs(center);
+
+            const cx = canvasWidth / 2;
+            const cy = canvasHeight / 2 + 20;
+            const chartWidth = Math.min(700, canvasWidth - 60);
+            const chartHeight = 220;
+            const barWidth = chartWidth / 256;
+
+            // 标题
+            ctx.font = '13px "Segoe UI", sans-serif';
+            ctx.fillStyle = '#94a3b8';
+            ctx.textAlign = 'center';
+            ctx.fillText('Stage4 CNN 输出: 256-class Exponent / Residual 概率分布', cx, cy - chartHeight / 2 - 30);
+
+            // 绘制坐标轴
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(cx - chartWidth / 2, cy + chartHeight / 2);
+            ctx.lineTo(cx + chartWidth / 2, cy + chartHeight / 2);
+            ctx.stroke();
+
+            // 绘制概率柱状图
+            const maxProb = Math.max(...State.probs);
+            const scale = (chartHeight / 2 - 10) / maxProb;
+
+            for (let i = 0; i < 256; i++) {
+                const barH = State.probs[i] * scale;
+                const x = cx - chartWidth / 2 + i * barWidth;
+                const y = cy + chartHeight / 2 - barH;
+
+                // 颜色根据概率值渐变
+                const intensity = State.probs[i] / maxProb;
+                const r = Math.floor(6 + intensity * 233);
+                const g = Math.floor(182 + intensity * 15);
+                const b = Math.floor(212 - intensity * 50);
+
+                ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+                ctx.fillRect(x, y, barWidth - 0.5, barH);
+
+                // 高亮真实值
+                if (i === center) {
+                    ctx.strokeStyle = '#ec4899';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(x - 1, y - 2, barWidth + 1, barH + 2);
+                }
+            }
+
+            // X轴标签
+            ctx.fillStyle = '#64748b';
+            ctx.font = '10px "Courier New", monospace';
+            for (let i = 0; i <= 256; i += 64) {
+                const x = cx - chartWidth / 2 + i * barWidth;
+                ctx.fillText(i, x, cy + chartHeight / 2 + 16);
+            }
+            ctx.fillText('Symbol (0-255)', cx, cy + chartHeight / 2 + 32);
+
+            // 高亮信息框
+            const infoX = cx + chartWidth / 2 + 20;
+            const infoY = cy - 40;
+
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.roundRect(infoX, infoY, 160, 100, 8);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.textAlign = 'left';
+            ctx.font = '11px "Segoe UI", sans-serif';
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText('真实 Symbol:', infoX + 12, infoY + 22);
+            ctx.font = 'bold 18px "Courier New", monospace';
+            ctx.fillStyle = '#ec4899';
+            ctx.fillText(center, infoX + 12, infoY + 46);
+
+            ctx.font = '11px "Segoe UI", sans-serif';
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText('预测概率:', infoX + 12, infoY + 66);
+            ctx.font = 'bold 14px "Courier New", monospace';
+            ctx.fillStyle = '#06b6d4';
+            ctx.fillText((State.probs[center] * 100).toFixed(2) + '%', infoX + 12, infoY + 86);
+
+            // 左侧 CNN 架构示意
+            const archX = cx - chartWidth / 2 - 140;
+            const archY = cy - 60;
+
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+            ctx.strokeStyle = '#334155';
+            ctx.beginPath();
+            ctx.roundRect(archX, archY, 120, 140, 8);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '10px "Segoe UI", sans-serif';
+            ctx.fillText('Small2DCNN', archX + 60, archY + 16);
+
+            // 绘制简化网络层
+            const layers = [
+                { h: 40, c: '#06b6d4', label: 'Conv2D' },
+                { h: 30, c: '#0891b2', label: 'ReLU' },
+                { h: 25, c: '#0e7490', label: 'Conv2D' },
+                { h: 20, c: '#155e75', label: 'FC 256' }
+            ];
+
+            let ly = archY + 30;
+            layers.forEach(layer => {
+                ctx.fillStyle = layer.c;
+                ctx.fillRect(archX + 20, ly, 80, layer.h);
+                ctx.fillStyle = '#fff';
+                ctx.font = '9px "Segoe UI", sans-serif';
+                ctx.fillText(layer.label, archX + 60, ly + layer.h / 2 + 3);
+                ly += layer.h + 4;
+            });
+
+            // 箭头
+            ctx.strokeStyle = '#64748b';
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(archX + 120, cy);
+            ctx.lineTo(cx - chartWidth / 2, cy);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.fillStyle = '#64748b';
+            ctx.font = '10px "Segoe UI", sans-serif';
+            ctx.fillText('17×17 Patch Input', archX + 60, archY - 8);
+        }
+
+        // ==========================================
+        // 步骤 4: Range Coding
+        // ==========================================
+        function renderStep4() {
+            const data = generateFloat32Data(State.sampleIndex);
+            const symbol = data.exp;
+            const probs = State.probs.length > 0 ? State.probs : generateProbs(symbol);
+
+            // 计算 CDF
+            const cdf = new Array(257).fill(0);
+            for (let i = 0; i < 256; i++) {
+                cdf[i + 1] = cdf[i] + probs[i];
+            }
+
+            const cx = canvasWidth / 2;
+            const cy = canvasHeight / 2;
+            const barW = Math.min(600, canvasWidth - 100);
+            const barH = 40;
+
+            // 标题
+            ctx.font = '13px "Segoe UI", sans-serif';
+            ctx.fillStyle = '#94a3b8';
+            ctx.textAlign = 'center';
+            ctx.fillText('Arithmetic / Range Coding: 区间缩窄过程', cx, cy - 120);
+
+            // 绘制 [0, 1) 区间条
+            const startY = cy - 80;
+
+            // 背景条
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(cx - barW / 2, startY, barW, barH);
+
+            // 绘制每个 symbol 的概率区间
+            let cumX = cx - barW / 2;
+            for (let i = 0; i < 256; i++) {
+                const w = probs[i] * barW;
+                const hue = (i / 256) * 360;
+                ctx.fillStyle = i === symbol ? '#ec4899' : `hsla(${hue}, 70%, 50%, 0.3)`;
+                ctx.fillRect(cumX, startY, w, barH);
+                cumX += w;
+            }
+
+            // 边框
+            ctx.strokeStyle = '#475569';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(cx - barW / 2, startY, barW, barH);
+
+            // 标签
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '11px "Courier New", monospace';
+            ctx.fillText('0.0', cx - barW / 2, startY + barH + 18);
+            ctx.fillText('1.0', cx + barW / 2, startY + barH + 18);
+
+            // 当前 Symbol 高亮箭头
+            const symStart = cx - barW / 2 + cdf[symbol] * barW;
+            const symWidth = probs[symbol] * barW;
+
+            ctx.strokeStyle = '#ec4899';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(symStart + symWidth / 2, startY - 10);
+            ctx.lineTo(symStart + symWidth / 2, startY);
+            ctx.stroke();
+
+            ctx.fillStyle = '#ec4899';
+            ctx.font = 'bold 12px "Segoe UI", sans-serif';
+            ctx.fillText(`Symbol ${symbol}`, symStart + symWidth / 2, startY - 16);
+
+            // 缩窄后的区间（放大视图）
+            const zoomY = startY + 80;
+            const zoomW = barW * 0.8;
+            const zoomH = 60;
+
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+            ctx.strokeStyle = '#334155';
+            ctx.beginPath();
+            ctx.roundRect(cx - zoomW / 2, zoomY, zoomW, zoomH, 8);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '11px "Segoe UI", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('放大视图: 当前区间缩窄过程', cx, zoomY - 10);
+
+            // 在放大视图中重新绘制局部
+            const localStart = cdf[symbol];
+            const localRange = probs[symbol];
+            const localCum = new Array(257).fill(0);
+            for (let i = 0; i < 256; i++) {
+                localCum[i + 1] = localCum[i] + probs[i];
+            }
+
+            let localX = cx - zoomW / 2;
+            for (let i = 0; i < 256; i++) {
+                const w = (probs[i] / localRange) * zoomW * 0.1; // 夸张显示
+                if (w < 1) continue;
+                const hue = (i / 256) * 360;
+                ctx.fillStyle = i === symbol ? '#ec4899' : `hsla(${hue}, 70%, 50%, 0.4)`;
+                ctx.fillRect(localX, zoomY + 10, w, zoomH - 20);
+                localX += w;
+            }
+
+            // 输出比特流
+            const bitsY = zoomY + zoomH + 50;
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '12px "Segoe UI", sans-serif';
+            ctx.fillText('输出比特流 (模拟):', cx, bitsY);
+
+            // 生成一些模拟比特
+            const bits = [];
+            let temp = symbol;
+            for (let i = 0; i < 16; i++) {
+                bits.push(temp & 1);
+                temp >>= 1;
+            }
+
+            const bitSize = 24;
+            const bitsStartX = cx - bits.length * bitSize / 2;
+
+            bits.forEach((b, i) => {
+                const x = bitsStartX + i * bitSize;
+                ctx.fillStyle = b ? '#10b981' : '#1e293b';
+                ctx.strokeStyle = '#475569';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.roundRect(x, bitsY + 10, bitSize - 2, bitSize, 4);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = b ? '#fff' : '#64748b';
+                ctx.font = 'bold 12px "Courier New", monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(b, x + bitSize / 2 - 1, bitsY + 28);
+            });
+
+            // 公式
+            ctx.font = '12px "Courier New", monospace';
+            ctx.fillStyle = '#64748b';
+            ctx.textAlign = 'center';
+            ctx.fillText('low = low + range × cdf[symbol]', cx, bitsY + 60);
+            ctx.fillText('range = range × prob[symbol]', cx, bitsY + 78);
+        }
+
+        // ==========================================
+        // 步骤 5: Sign & Mantissa 压缩策略
+        // ==========================================
+        function renderStep5() {
+            const cx = canvasWidth / 2;
+            const cy = canvasHeight / 2;
+
+            ctx.font = '13px "Segoe UI", sans-serif';
+            ctx.fillStyle = '#94a3b8';
+            ctx.textAlign = 'center';
+            ctx.fillText('Sign & Mantissa 压缩策略对比', cx, cy - 180);
+
+            // 策略表格
+            const strategies = [
+                { name: 'Bitpack', signBytes: 0.125, mantBytes: 2.875, total: 3.0, color: '#06b6d4' },
+                { name: 'RLE', signBytes: 0.05, mantBytes: 2.1, total: 2.15, color: '#f59e0b' },
+                { name: 'zstd', signBytes: 0.08, mantBytes: 1.8, total: 1.88, color: '#10b981' },
+                { name: 'lzma', signBytes: 0.07, mantBytes: 1.6, total: 1.67, color: '#8b5cf6' },
+                { name: 'PathL-lite', signBytes: 0.06, mantBytes: 1.4, total: 1.46, color: '#ec4899' }
+            ];
+
+            const tableW = 500;
+            const rowH = 50;
+            const startY = cy - 140;
+            const startX = cx - tableW / 2;
+
+            // 表头
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(startX, startY, tableW, rowH);
+            ctx.strokeStyle = '#334155';
+            ctx.strokeRect(startX, startY, tableW, rowH);
+
+            ctx.font = 'bold 12px "Segoe UI", sans-serif';
+            ctx.fillStyle = '#94a3b8';
+            ctx.textAlign = 'center';
+            const cols = ['策略', 'Sign 压缩', 'Mantissa 压缩', '合计字节', '压缩比'];
+            const colWidths = [120, 110, 110, 100, 60];
+            let colX = startX;
+            cols.forEach((col, i) => {
+                ctx.fillText(col, colX + colWidths[i] / 2, startY + 30);
+                colX += colWidths[i];
+            });
+
+            // 数据行
+            strategies.forEach((strat, idx) => {
+                const y = startY + rowH + idx * rowH;
+                const isBest = strat.name === 'PathL-lite';
+
+                ctx.fillStyle = isBest ? 'rgba(236, 72, 153, 0.1)' : (idx % 2 === 0 ? '#0f172a' : '#162032');
+                ctx.fillRect(startX, y, tableW, rowH);
+                ctx.strokeStyle = '#334155';
+                ctx.strokeRect(startX, y, tableW, rowH);
+
+                // 策略名
+                ctx.textAlign = 'left';
+                ctx.font = isBest ? 'bold 13px "Segoe UI", sans-serif' : '13px "Segoe UI", sans-serif';
+                ctx.fillStyle = isBest ? '#ec4899' : '#f1f5f9';
+                ctx.fillText(strat.name, startX + 12, y + 32);
+
+                // 进度条可视化
+                const barMaxW = 80;
+                const barH = 8;
+
+                // Sign bar
+                const signW = strat.signBytes / 0.125 * barMaxW;
+                ctx.fillStyle = '#1e293b';
+                ctx.fillRect(startX + 120 + 5, y + 18, barMaxW, barH);
+                ctx.fillStyle = '#ef4444';
+                ctx.fillRect(startX + 120 + 5, y + 18, signW, barH);
+                ctx.textAlign = 'center';
+                ctx.font = '10px "Courier New", monospace';
+                ctx.fillStyle = '#94a3b8';
+                ctx.fillText(strat.signBytes.toFixed(3), startX + 120 + 55, y + 38);
+
+                // Mantissa bar
+                const mantW = (1 - strat.mantBytes / 2.875) * barMaxW;
+                ctx.fillStyle = '#1e293b';
+                ctx.fillRect(startX + 230 + 5, y + 18, barMaxW, barH);
+                ctx.fillStyle = '#06b6d4';
+                ctx.fillRect(startX + 230 + 5, y + 18, mantW, barH);
+                ctx.fillText(strat.mantBytes.toFixed(2), startX + 230 + 55, y + 38);
+
+                // Total
+                ctx.font = isBest ? 'bold 13px "Courier New", monospace' : '13px "Courier New", monospace';
+                ctx.fillStyle = isBest ? '#ec4899' : '#f1f5f9';
+                ctx.fillText(strat.total.toFixed(2), startX + 340 + 50, y + 32);
+
+                // Ratio
+                const ratio = (3.0 / strat.total).toFixed(2) + ':1';
+                ctx.fillText(ratio, startX + 440 + 30, y + 32);
+
+                // 推荐标记
+                if (isBest) {
+                    ctx.fillStyle = '#ec4899';
+                    ctx.font = '10px "Segoe UI", sans-serif';
+                    ctx.fillText('★ 推荐', startX + tableW - 50, y + 32);
+                }
+            });
+
+            // 底部说明
+            ctx.font = '12px "Segoe UI", sans-serif';
+            ctx.fillStyle = '#64748b';
+            ctx.textAlign = 'center';
+            ctx.fillText('Sign: 1 bit/值 → 通常高度可压缩（地震数据符号相关性高）', cx, startY + strategies.length * rowH + 40);
+            ctx.fillText('Mantissa: 23 bits/值 → 需要高效熵编码器', cx, startY + strategies.length * rowH + 58);
+        }
+
+        // ==========================================
+        // 步骤 6: 压缩汇总仪表盘
+        // ==========================================
+        function renderStep6() {
+            const cx = canvasWidth / 2;
+            const cy = canvasHeight / 2;
+
+            ctx.font = '13px "Segoe UI", sans-serif';
+            ctx.fillStyle = '#94a3b8';
+            ctx.textAlign = 'center';
+            ctx.fillText('Stage4 Float32 压缩总览', cx, cy - 180);
+
+            // 甜甜圈图数据
+            const rawBytes = 4.0;
+            const expBytes = 0.38;  // Stage4 + Range Coding
+            const signBytes = 0.06; // PathL-lite / RLE
+            const mantBytes = 1.40; // PathL-lite
+            const totalBytes = expBytes + signBytes + mantBytes;
+            const ratio = rawBytes / totalBytes;
+
+            const data = [
+                { label: 'Exponent (Stage4)', value: expBytes, color: '#f59e0b' },
+                { label: 'Sign', value: signBytes, color: '#ef4444' },
+                { label: 'Mantissa', value: mantBytes, color: '#06b6d4' }
+            ];
+
+            const radius = Math.min(120, canvasWidth / 6);
+            const innerR = radius * 0.6;
+            let startAngle = -Math.PI / 2;
+
+            // 绘制甜甜圈
+            data.forEach(seg => {
+                const angle = (seg.value / totalBytes) * Math.PI * 2;
+
+                ctx.beginPath();
+                ctx.arc(cx - 100, cy, radius, startAngle, startAngle + angle);
+                ctx.arc(cx - 100, cy, innerR, startAngle + angle, startAngle, true);
+                ctx.closePath();
+                ctx.fillStyle = seg.color;
+                ctx.fill();
+                ctx.strokeStyle = '#0f172a';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                startAngle += angle;
+            });
+
+            // 中心文字
+            ctx.fillStyle = '#f1f5f9';
+            ctx.font = 'bold 28px "Courier New", monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(ratio.toFixed(2) + ':1', cx - 100, cy - 6);
+            ctx.font = '11px "Segoe UI", sans-serif';
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText('压缩比', cx - 100, cy + 14);
+
+            // 右侧指标卡片
+            const cardW = 200;
+            const cardX = cx + 40;
+            const metrics = [
+                { label: '原始大小', value: '4.00', unit: 'B', color: '#94a3b8' },
+                { label: '压缩后', value: totalBytes.toFixed(2), unit: 'B', color: '#10b981' },
+                { label: 'Exponent', value: expBytes.toFixed(2), unit: 'B', color: '#f59e0b' },
+                { label: 'Sign', value: signBytes.toFixed(2), unit: 'B', color: '#ef4444' },
+                { label: 'Mantissa', value: mantBytes.toFixed(2), unit: 'B', color: '#06b6d4' }
+            ];
+
+            metrics.forEach((m, i) => {
+                const y = cy - 100 + i * 50;
+
+                ctx.fillStyle = '#1e293b';
+                ctx.beginPath();
+                ctx.roundRect(cardX, y, cardW, 40, 6);
+                ctx.fill();
+
+                ctx.fillStyle = '#64748b';
+                ctx.font = '10px "Segoe UI", sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText(m.label, cardX + 12, y + 14);
+
+                ctx.fillStyle = m.color;
+                ctx.font = 'bold 16px "Courier New", monospace';
+                ctx.textAlign = 'right';
+                ctx.fillText(m.value + ' ' + m.unit, cardX + cardW - 12, y + 28);
+            });
+
+            // 底部流程图
+            const flowY = cy + 160;
+            const stages = [
+                { name: 'Float32', bytes: 4.0, color: '#64748b' },
+                { name: '→', bytes: null, color: '#475569' },
+                { name: 'Split', bytes: null, color: '#475569' },
+                { name: '→', bytes: null, color: '#475569' },
+                { name: 'Stage4', bytes: 0.38, color: '#f59e0b' },
+                { name: '+', bytes: null, color: '#475569' },
+                { name: 'Sign', bytes: 0.06, color: '#ef4444' },
+                { name: '+', bytes: null, color: '#475569' },
+                { name: 'Mantissa', bytes: 1.40, color: '#06b6d4' },
+                { name: '=', bytes: null, color: '#475569' },
+                { name: 'Total', bytes: 1.84, color: '#10b981' }
+            ];
+
+            let flowX = cx - 280;
+            stages.forEach(s => {
+                if (s.bytes !== null) {
+                    ctx.fillStyle = s.color + '20';
+                    ctx.strokeStyle = s.color;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.roundRect(flowX, flowY, 50, 36, 6);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    ctx.fillStyle = s.color;
+                    ctx.font = 'bold 10px "Courier New", monospace';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(s.bytes.toFixed(2), flowX + 25, flowY + 15);
+                    ctx.font = '9px "Segoe UI", sans-serif';
+                    ctx.fillText(s.name, flowX + 25, flowY + 30);
+                    flowX += 58;
+                } else {
+                    ctx.fillStyle = s.color;
+                    ctx.font = '14px "Segoe UI", sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(s.name, flowX + 10, flowY + 22);
+                    flowX += 24;
+                }
+            });
+
+            ctx.textBaseline = 'alphabetic';
+        }
+
+        // ==========================================
+        // 通用渲染调度
+        // ==========================================
+        function renderCurrentStep() {
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+            switch(State.currentStep) {
+                case 1: renderStep1(); break;
+                case 2: renderStep2(); break;
+                case 3: renderStep3(); break;
+                case 4: renderStep4(); break;
+                case 5: renderStep5(); break;
+                case 6: renderStep6(); break;
+            }
+        }
+
+        // ==========================================
+        // 右侧信息面板内容
+        // ==========================================
+        const stepInfo = {
+            1: {
+                formula: `<span class="comment"># IEEE 754 Float32 拆解</span><br>
+<span class="keyword">def</span> extract_float_components(data):<br>
+&nbsp;&nbsp;u32 = data.view(np.uint32)<br>
+&nbsp;&nbsp;signs = (u32 >> 31) & 0x1<br>
+&nbsp;&nbsp;exps = (u32 >> 23) & 0xFF<br>
+&nbsp;&nbsp;mants = u32 & 0x7FFFFF<br>
+&nbsp;&nbsp;<span class="keyword">return</span> signs, exps, mants`,
+                text: 'Float32 由 32 个 Bit 组成：1 Bit 符号位、8 Bits 指数位（带 127 偏移）、23 Bits 尾数位。Stage4 算法将这三部分分离，针对不同统计特性采用不同压缩策略。'
+            },
+            2: {
+                formula: `<span class="comment"># diagonal_causal_edge 特征提取</span><br>
+feature = build_stage4_features(<br>
+&nbsp;&nbsp;exps, coord,<br>
+&nbsp;&nbsp;patch_shape=(17, 17),<br>
+&nbsp;&nbsp;feature_mode=<span class="string">"diagonal_causal_edge"</span>,<br>
+&nbsp;&nbsp;target_mode=<span class="string">"residual"</span><br>
+)`,
+                text: '在 profile-trace 平面上提取 17×17 的因果 Patch。只使用已经编码过的空间位置（蓝色区域）作为上下文，确保编解码器状态一致。当前处理点沿全局对角线方向推进。'
+            },
+            3: {
+                formula: `<span class="comment"># Stage4 CNN 概率预测</span><br>
+logits = Small2DCNN(feature_patch)<br>
+probs = softmax(logits)  <span class="comment"># 256 classes</span><br><br>
+<span class="comment"># Residual 目标</span><br>
+symbol = (true_exp - loco_i_pred) mod 256`,
+                text: 'Small2DCNN 接收 17×17 的因果 Patch，输出 256 维概率分布。使用 residual 目标模式时，预测的是真实 exponent 与 LOCO-I 预测值的差值（模 256），通常比直接预测原始 exponent 更容易压缩。'
+            },
+            4: {
+                formula: `<span class="comment"># Range Coder 算术编码</span><br>
+cdf = probs_to_cdf(probs)<br>
+encoder.encode_symbol(symbol, cdf)<br><br>
+<span class="comment"># 解码时复现相同上下文</span><br>
+decoded = decoder.decode_symbol(cdf)<br>
+exp = (loco_i_pred + decoded) mod 256`,
+                text: '将 CNN 输出的概率分布量化为 CDF，Range Encoder 根据 symbol 的概率区间缩窄编码范围。解码时使用相同的 causal 上下文和模型，重建概率分布后恢复 symbol，再通过 LOCO-I 预测还原 exponent。'
+            },
+            5: {
+                formula: `<span class="comment"># Sign & Mantissa 压缩策略</span><br>
+sign_bits → RLE / zstd / bitpack<br>
+mantissa_bits → lzma / PathL-lite<br><br>
+<span class="comment"># 总字节数</span><br>
+total = exp_bytes + sign_bytes + mant_bytes`,
+                text: 'Sign 位和 Mantissa 位不经过 Stage4 CNN 训练。Sign 通常具有高度空间相关性（地震数据），RLE 或简单熵编码效果极佳。Mantissa 使用 lzma 或 PathL-lite 等通用压缩器，与 Exponent 压缩结果汇总得到最终大小。'
+            },
+            6: {
+                formula: `<span class="comment"># 压缩汇总</span><br>
+compression_ratio = raw_bytes / total_bytes<br><br>
+<span class="comment"># 典型结果 (TUI 数据)</span><br>
+raw = 4.0 B<br>
+total ≈ 1.84 B<br>
+ratio ≈ 2.17 : 1`,
+                text: '最终压缩结果由三部分组成：Stage4 + Range Coding 压缩的 Exponent、规则压缩的 Sign、以及 PathL-lite/lzma 压缩的 Mantissa。评估时应同时报告不含 checkpoint size 和含 checkpoint size 的结果。'
+            }
+        };
+
+        const stepMetrics = {
+            1: `
+                <div class="metric-card">
+                    <div class="metric-label">当前采样点</div>
+                    <div class="metric-value">${State.sampleIndex}<span class="metric-unit">/ 999</span></div>
+                </div>
+                <div class="metric-card" style="border-left-color: var(--bit-sign)">
+                    <div class="metric-label">Sign</div>
+                    <div class="metric-value" id="metric-sign">0<span class="metric-unit">bit</span></div>
+                </div>
+                <div class="metric-card" style="border-left-color: var(--bit-exp)">
+                    <div class="metric-label">Exponent</div>
+                    <div class="metric-value" id="metric-exp">0<span class="metric-unit">(biased)</span></div>
+                </div>
+                <div class="metric-card" style="border-left-color: var(--bit-mant)">
+                    <div class="metric-label">Mantissa</div>
+                    <div class="metric-value" id="metric-mant">0<span class="metric-unit">hex</span></div>
+                </div>
+            `,
+            2: `
+                <div class="metric-card">
+                    <div class="metric-label">Patch 大小</div>
+                    <div class="metric-value">17 × 17</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Causal 可见点</div>
+                    <div class="metric-value">144<span class="metric-unit">/ 289</span></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Feature Mode</div>
+                    <div class="metric-value" style="font-size: 14px">diagonal_causal_edge</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">当前 Diagonal</div>
+                    <div class="metric-value">${State.sampleIndex % 24}<span class="metric-unit">/ 23</span></div>
+                </div>
+            `,
+            3: `
+                <div class="metric-card">
+                    <div class="metric-label">Top-1 概率</div>
+                    <div class="metric-value" id="metric-top1">0<span class="metric-unit">%</span></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Top-5 概率</div>
+                    <div class="metric-value" id="metric-top5">0<span class="metric-unit">%</span></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Perplexity</div>
+                    <div class="metric-value" id="metric-ppl">0<span class="metric-unit"></span></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">NLL Bits</div>
+                    <div class="metric-value" id="metric-nll">0<span class="metric-unit">bits</span></div>
+                </div>
+            `,
+            4: `
+                <div class="metric-card">
+                    <div class="metric-label">编码 Symbol</div>
+                    <div class="metric-value" id="metric-symbol">0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">概率质量</div>
+                    <div class="metric-value" id="metric-mass">0<span class="metric-unit">%</span></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">区间缩窄</div>
+                    <div class="metric-value">2<sup>-16</sup><span class="metric-unit">精度</span></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">输出比特</div>
+                    <div class="metric-value">~1.2<span class="metric-unit">bits/symbol</span></div>
+                </div>
+            `,
+            5: `
+                <div class="metric-row">
+                    <div class="metric-card" style="border-left-color: var(--bit-sign)">
+                        <div class="metric-label">Sign</div>
+                        <div class="metric-value">0.06<span class="metric-unit">B</span></div>
+                    </div>
+                    <div class="metric-card" style="border-left-color: var(--bit-mant)">
+                        <div class="metric-label">Mantissa</div>
+                        <div class="metric-value">1.40<span class="metric-unit">B</span></div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">推荐策略</div>
+                    <div class="metric-value" style="font-size: 14px">PathL-lite</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">辅助位合计</div>
+                    <div class="metric-value">1.46<span class="metric-unit">B</span></div>
+                </div>
+            `,
+            6: `
+                <div class="metric-card">
+                    <div class="metric-label">原始大小</div>
+                    <div class="metric-value">4.00<span class="metric-unit">B / value</span></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">压缩后</div>
+                    <div class="metric-value">1.84<span class="metric-unit">B / value</span></div>
+                </div>
+                <div class="metric-card" style="border-left-color: var(--accent-green)">
+                    <div class="metric-label">压缩比</div>
+                    <div class="metric-value">2.17<span class="metric-unit">: 1</span></div>
+                </div>
+                <div class="metric-card" style="border-left-color: var(--accent-pink)">
+                    <div class="metric-label">节省空间</div>
+                    <div class="metric-value">54<span class="metric-unit">%</span></div>
+                </div>
+            `
+        };
+
+        function updateInfoPanel() {
+            const info = stepInfo[State.currentStep];
+            const infoDiv = document.getElementById('info-content');
+            infoDiv.innerHTML = `
+                <div class="formula-box animate-slide">${info.formula}</div>
+                <p class="info-text animate-slide">${info.text}</p>
+            `;
+
+            const metricsDiv = document.getElementById('metrics-content');
+            metricsDiv.innerHTML = stepMetrics[State.currentStep];
+
+            // 更新动态指标值
+            const data = generateFloat32Data(State.sampleIndex);
+            if (State.currentStep === 1) {
+                document.getElementById('metric-sign').innerHTML = data.sign + '<span class="metric-unit">bit</span>';
+                document.getElementById('metric-exp').innerHTML = data.exp + '<span class="metric-unit">(biased)</span>';
+                document.getElementById('metric-mant').innerHTML = data.mant.toString(16).toUpperCase() + '<span class="metric-unit">hex</span>';
+            } else if (State.currentStep === 3) {
+                const probs = generateProbs(data.exp);
+                const sorted = [...probs].sort((a, b) => b - a);
+                const top1 = (sorted[0] * 100).toFixed(1);
+                const top5 = (sorted.slice(0, 5).reduce((a, b) => a + b, 0) * 100).toFixed(1);
+                const entropy = -probs.reduce((sum, p) => sum + (p > 0 ? p * Math.log2(p) : 0), 0);
+                const ppl = Math.pow(2, entropy).toFixed(2);
+                const nll = (-Math.log2(probs[data.exp])).toFixed(3);
+
+                document.getElementById('metric-top1').innerHTML = top1 + '<span class="metric-unit">%</span>';
+                document.getElementById('metric-top5').innerHTML = top5 + '<span class="metric-unit">%</span>';
+                document.getElementById('metric-ppl').innerHTML = ppl;
+                document.getElementById('metric-nll').innerHTML = nll + '<span class="metric-unit">bits</span>';
+            } else if (State.currentStep === 4) {
+                const probs = generateProbs(data.exp);
+                document.getElementById('metric-symbol').textContent = data.exp;
+                document.getElementById('metric-mass').innerHTML = (probs[data.exp] * 100).toFixed(2) + '<span class="metric-unit">%</span>';
+            }
+        }
+
+        function updateCoordDisplay(data) {
+            const shape = State.volumeShape;
+            const total = State.sampleIndex;
+            const s = total % shape[2];
+            const t = Math.floor(total / shape[2]) % shape[1];
+            const p = Math.floor(total / (shape[1] * shape[2])) % shape[0];
+
+            document.getElementById('coord-p').textContent = p;
+            document.getElementById('coord-t').textContent = t;
+            document.getElementById('coord-s').textContent = s;
+        }
+
+        // ==========================================
+        // 事件绑定
+        // ==========================================
+        document.querySelectorAll('.step-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.step-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                State.currentStep = parseInt(tab.dataset.step);
+
+                const titles = {
+                    1: ['IEEE 754 Float32 Bit 解剖', '将 32-bit 浮点数拆解为 Sign / Exponent / Mantissa'],
+                    2: ['3D 特征提取 (Causal Patch)', 'diagonal_causal_edge 模式下的上下文构建'],
+                    3: ['Stage4 CNN 概率预测', '256-class Exponent / Residual 概率分布输出'],
+                    4: ['Range Coding 算术编码', '基于概率分布的区间缩窄与比特流生成'],
+                    5: ['Sign & Mantissa 压缩', '多种规则压缩策略对比与最优选择'],
+                    6: ['压缩汇总仪表盘', '总压缩比与各部分贡献分析']
+                };
+
+                document.getElementById('stage-title').textContent = titles[State.currentStep][0];
+                document.getElementById('stage-subtitle').textContent = titles[State.currentStep][1];
+
+                updateInfoPanel();
+                renderCurrentStep();
+            });
+        });
+
+        document.getElementById('sample-slider').addEventListener('input', (e) => {
+            State.sampleIndex = parseInt(e.target.value);
+            document.getElementById('sample-idx').textContent = State.sampleIndex;
+            renderCurrentStep();
+            updateInfoPanel();
+        });
+
+        document.getElementById('speed-slider').addEventListener('input', (e) => {
+            State.speed = parseInt(e.target.value);
+            document.getElementById('speed-val').textContent = State.speed + 'ms';
+            if (State.isPlaying) {
+                clearInterval(State.playInterval);
+                startPlayback();
+            }
+        });
+
+        document.getElementById('feature-mode').addEventListener('change', (e) => {
+            State.featureMode = e.target.value;
+        });
+
+        document.getElementById('target-mode').addEventListener('change', (e) => {
+            State.targetMode = e.target.value;
+        });
+
+        document.getElementById('patch-size').addEventListener('change', (e) => {
+            State.patchSize = parseInt(e.target.value);
+        });
+
+        document.getElementById('dataset-select').addEventListener('change', (e) => {
+            State.dataset = e.target.value;
+            if (e.target.value === 'postdata') {
+                State.volumeShape = [100, 600, 2001];
+            } else {
+                State.volumeShape = [350, 600, 2001];
+            }
+        });
+
+        function startPlayback() {
+            State.isPlaying = true;
+            document.getElementById('status-badge').textContent = '播放中';
+            document.getElementById('status-badge').className = 'status-badge status-running';
+
+            State.playInterval = setInterval(() => {
+                State.sampleIndex = (State.sampleIndex + 1) % 1000;
+                document.getElementById('sample-slider').value = State.sampleIndex;
+                document.getElementById('sample-idx').textContent = State.sampleIndex;
+                renderCurrentStep();
+                updateInfoPanel();
+            }, State.speed);
+        }
+
+        function stopPlayback() {
+            State.isPlaying = false;
+            clearInterval(State.playInterval);
+            document.getElementById('status-badge').textContent = '已暂停';
+            document.getElementById('status-badge').className = 'status-badge status-paused';
+        }
+
+        document.getElementById('btn-play').addEventListener('click', startPlayback);
+        document.getElementById('btn-pause').addEventListener('click', stopPlayback);
+
+        // ==========================================
+        // 动画循环 (用于需要连续动画的步骤)
+        // ==========================================
+        function animationLoop() {
+            if (State.currentStep === 2) {
+                renderStep2();
+            }
+            requestAnimationFrame(animationLoop);
+        }
+
+        // ==========================================
+        // 初始化
+        // ==========================================
+        resizeCanvas();
+        updateInfoPanel();
+        animationLoop();
+
+        // 初始渲染
+        renderCurrentStep();
+    </script>
+</body>
+</html>

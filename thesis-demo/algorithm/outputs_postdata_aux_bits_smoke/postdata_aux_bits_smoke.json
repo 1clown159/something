@@ -1,0 +1,83 @@
+{
+  "value_count": 1024,
+  "raw_float32_bytes": 4096,
+  "settings": {
+    "zstd_level": 9,
+    "zstd_threads": 0,
+    "sign_rle_level": 3,
+    "lzma_preset": 6,
+    "chunk_values": 8000000,
+    "limit_blocks": 0,
+    "limit_values": 1024,
+    "skip_bitshuffle": true,
+    "bitshuffle_mode": "auto",
+    "keep_temp": false
+  },
+  "sign": {
+    "best_bytes": 99,
+    "best_method": "rle_lengths+zstd",
+    "candidates": {
+      "bitpack+zstd": 115,
+      "bitpack+lzma": 180,
+      "rle_lengths+zstd": 99,
+      "rle_lengths+lzma": 160,
+      "rle_deltas+zstd": 157,
+      "rle_deltas+lzma": 224
+    },
+    "rle": {
+      "run_count": 120,
+      "max_run": 118,
+      "first_run_length": 118,
+      "length_dtype": "uint8"
+    }
+  },
+  "mantissa": {
+    "whole_zstd_bytes": 2753,
+    "whole_zstd_method": "mantissa23_packed+zstd",
+    "pathL_lite_bytes": 2688,
+    "pathL_lite_method": "mid15_bytesplit_zstd + hi4lo4_raw_zstd",
+    "pathL_lite_detail": {
+      "mid_bytes": 1776,
+      "mid_method": "mid15_bytesplit_zstd",
+      "mid_candidates": {
+        "mid15_raw_u16_zstd": 1842,
+        "mid15_bytesplit_zstd": 1776
+      },
+      "side_bytes": 912,
+      "side_method": "hi4lo4_raw_zstd",
+      "side_candidates": {
+        "hi4lo4_raw_zstd": 912
+      }
+    }
+  },
+  "combined_schemes": [
+    {
+      "scheme": "PostData predicted exp + sign-best + PathL-lite",
+      "sign_bytes": 99,
+      "sign_method": "rle_lengths+zstd",
+      "exp_bytes": 128.0,
+      "exp_source": "average_nll_bits",
+      "mant_bytes": 2688,
+      "mant_method": "mid15_bytesplit_zstd + hi4lo4_raw_zstd",
+      "total_bytes": 2915.0,
+      "bits_per_value": 22.7734375,
+      "compression_ratio_vs_float32": 1.4051457975986277,
+      "space_saving_ratio": 0.288330078125,
+      "exponent_method": "sampled NLL estimate, not a real bitstream"
+    },
+    {
+      "scheme": "PostData predicted exp + sign-best + mantissa-whole-zstd",
+      "sign_bytes": 99,
+      "sign_method": "rle_lengths+zstd",
+      "exp_bytes": 128.0,
+      "exp_source": "average_nll_bits",
+      "mant_bytes": 2753,
+      "mant_method": "mantissa23_packed+zstd",
+      "total_bytes": 2980.0,
+      "bits_per_value": 23.28125,
+      "compression_ratio_vs_float32": 1.374496644295302,
+      "space_saving_ratio": 0.2724609375,
+      "exponent_method": "sampled NLL estimate, not a real bitstream"
+    }
+  ]
+}
