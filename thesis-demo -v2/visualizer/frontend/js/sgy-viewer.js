@@ -13,6 +13,13 @@ document.addEventListener('DOMContentLoaded',function(){
     var bs=$('runBitStatsBtn');if(bs)bs.addEventListener('click',runBitStats);
 });
 
+function switchSgyView(view){
+    $('viewHeatmap').style.display = view==='heatmap'?'block':'none';
+    $('viewGray').style.display = view==='gray'?'block':'none';
+    $('tabHeatmap').classList.toggle('active', view==='heatmap');
+    $('tabGray').classList.toggle('active', view==='gray');
+}
+
 function handleUpload(e){
     var file=e.target.files[0];if(!file)return;
     $('sgyStatus').textContent='解析中...';$('sgyMetaResult').innerHTML='<div class="loading-spinner" style="margin:auto;"></div>';
@@ -38,7 +45,7 @@ function renderMeta(d){
 function loadHeatmap(){
     if(!sgyMeta||!sgyMeta.stored_path){alert('请先上传并解析 SEG-Y 文件');return;}
     var idx=parseInt($('profileIdx').value)||0;showLoading(true);
-    axios.get(API_BASE_URL+'/api/sgy/heatmap',{params:{file_path:sgyMeta.stored_path,inline_idx:idx}}).then(function(resp){
+    axios.get(API_BASE_URL+'/api/sgy/heatmap',{params:{file_path:sgyMeta.stored_path,inline_idx:idx, max_cols:500, max_rows:600}}).then(function(resp){
         var d=resp.data;heatmapData=d.data;heatmapVmin=d.vmin;heatmapVmax=d.vmax;renderCanvas(d,idx);
     }).catch(function(err){$('heatmapContainer').innerHTML='<div class="chart-placeholder">加载失败: '+getErr(err)+'</div>';}).finally(function(){showLoading(false);});
 }
@@ -61,10 +68,76 @@ function renderCanvas(result,idx){
     var tip=null;
     canvas.addEventListener('mousemove',function(e){var rect=canvas.getBoundingClientRect(),mx=Math.floor((e.clientX-rect.left)/cellW),my=Math.floor((e.clientY-rect.top)/cellH);if(mx>=0&&mx<cc&&data[mx]&&my>=0&&my<data[mx].length){var val=data[mx][my];if(!tip){tip=document.createElement('div');tip.className='sgy-tip';tip.style.cssText='position:fixed;background:#fff;color:#1a1a2e;padding:4px 8px;border-radius:4px;font-size:11px;font-family:JetBrains Mono,monospace;pointer-events:none;z-index:999;border:1px solid rgba(0,0,0,0.15);box-shadow:0 2px 8px rgba(0,0,0,0.1);';document.body.appendChild(tip);}tip.style.display='block';tip.textContent='道#'+mx+' 样点#'+my+' = '+val.toFixed(4);tip.style.left=(e.clientX+14)+'px';tip.style.top=(e.clientY-24)+'px';}else if(tip){tip.style.display='none';}});
     canvas.addEventListener('mouseleave',function(){if(tip)tip.style.display='none';});
-    canvas.addEventListener('click',function(e){var rect=canvas.getBoundingClientRect(),mx=Math.floor((e.clientX-rect.left)/cellW);if(mx>=0&&mx<cc){$('traceIdx').value=mx;$('traceRange').textContent='范围: 0 – '+(cc-1)+' | 道 #'+mx;svNav.setStepEnabled(2,true);svNav.markStepDone(1);svNav.goToStep(2);setTimeout(function(){drawWaveform();},200);}});
     svNav.setStepEnabled(2,true);svNav.setStepEnabled(3,true);
     if($('traceIdx')){$('traceIdx').max=cc-1;$('traceRange').textContent='范围: 0 – '+(cc-1);}
     $('heatmapInfo').textContent='剖面 #'+idx+' | '+cc+' 道 × '+rc+' 采样 | 值域 ['+vMin.toFixed(2)+', '+vMax.toFixed(2)+'] | W:H='+aw+':'+ah;
+
+    // ===== Grayscale image =====
+    renderGrayscale(data, cc, rc, vMin, vMax, idx);
+}
+function renderGrayscale(data, cc, rc, vMin, vMax, idx){
+    var gCellW=2, gCellH=1, gw=cc*gCellW, gh=rc*gCellH;
+    var gc=$('grayContainer'); gc.innerHTML='';
+    var gCanvas=document.createElement('canvas'); gCanvas.width=gw; gCanvas.height=gh;
+    gCanvas.style.cssText='display:block;max-width:100%;height:auto;margin:0 auto;cursor:crosshair;image-rendering:pixelated;';
+    gc.appendChild(gCanvas);
+    var gCtx=gCanvas.getContext('2d'); gCtx.imageSmoothingEnabled=false;
+    var vR=vMax-vMin||1;
+    var gImg=gCtx.createImageData(gw,gh), gBuf=gImg.data;
+    for(var t=0;t<cc;t++){var row=data[t];if(!row)continue;for(var s=0;s<row.length;s++){
+        var val=(row[s]-vMin)/vR, gs=Math.round(Math.max(0,Math.min(1,val))*255);
+        var py=s*gCellH, px=t*gCellW;
+        for(var dx=0;dx<gCellW;dx++){var bi=(py*gw+(px+dx))*4;gBuf[bi]=gs;gBuf[bi+1]=gs;gBuf[bi+2]=gs;gBuf[bi+3]=255;}
+    }}
+    gCtx.putImageData(gImg,0,0);
+
+    // ===== Observation box on grayscale =====
+    var obsBoxW=Math.min(30, cc), obsBoxH=Math.min(40, rc);
+    var obsOverlay=null, obsInfo=null, obsFrozen=null;
+    function ensureObs(){
+        if(!obsOverlay){
+            gc.style.position='relative';
+            obsOverlay=document.createElement('div'); obsOverlay.className='sgy-observe-overlay';
+            obsOverlay.style.display='none'; gc.appendChild(obsOverlay);
+            obsInfo=document.createElement('div'); obsInfo.className='sgy-observe-info';
+            obsInfo.style.display='none'; gc.appendChild(obsInfo);
+        }
+    }
+    function gCS(){var r=gCanvas.getBoundingClientRect();var cx=gCanvas.offsetLeft, cy=gCanvas.offsetTop;return{cssW:r.width/cc, cssH:r.height/rc, left:r.left, top:r.top, cx:cx, cy:cy};}
+    function updateObs(cs, mx, my){
+        var bx=Math.max(0,Math.min(mx-Math.floor(obsBoxW/2), cc-obsBoxW));
+        var by=Math.max(0,Math.min(my-Math.floor(obsBoxH/2), rc-obsBoxH));
+        obsOverlay.style.display='block'; obsInfo.style.display='block';
+        obsOverlay.style.left=(cs.cx + bx*cs.cssW)+'px'; obsOverlay.style.top=(cs.cy + by*cs.cssH)+'px';
+        obsOverlay.style.width=(obsBoxW*cs.cssW)+'px'; obsOverlay.style.height=(obsBoxH*cs.cssH)+'px';
+        obsInfo.style.left=(cs.cx + bx*cs.cssW+2)+'px'; obsInfo.style.top=(cs.cy + by*cs.cssH-22)+'px';
+        return{bx:bx, by:by};
+    }
+    gCanvas.addEventListener('mousemove',function(e){
+        if(obsFrozen)return; ensureObs();
+        var cs=gCS(), mx=Math.floor((e.clientX-cs.left)/cs.cssW), my=Math.floor((e.clientY-cs.top)/cs.cssH);
+        if(mx>=0&&mx<cc&&my>=0&&my<rc){
+            var pos=updateObs(cs,mx,my);
+            obsInfo.textContent='道'+pos.bx+'-'+(pos.bx+obsBoxW)+' 样点'+pos.by+'-'+(pos.by+obsBoxH)+' (点击固定)';
+        }
+    });
+    gCanvas.addEventListener('click',function(e){
+        var cs=gCS(), mx=Math.floor((e.clientX-cs.left)/cs.cssW), my=Math.floor((e.clientY-cs.top)/cs.cssH);
+        if(mx<0||mx>=cc||my<0||my>=rc)return;
+        ensureObs();
+        if(obsFrozen){
+            obsFrozen=null; obsOverlay.style.borderColor='#f59e0b'; obsOverlay.style.background='rgba(245,158,11,0.08)';
+            var pos=updateObs(cs,mx,my);
+            obsInfo.textContent='道'+pos.bx+'-'+(pos.bx+obsBoxW)+' 样点'+pos.by+'-'+(pos.by+obsBoxH)+' (点击固定)';
+        }else{
+            var pos=updateObs(cs,mx,my);
+            obsFrozen={traceStart:pos.bx, traceEnd:pos.bx+obsBoxW, sampleStart:pos.by, sampleEnd:pos.by+obsBoxH};
+            obsOverlay.style.borderColor='#ec4899'; obsOverlay.style.background='rgba(236,72,153,0.1)';
+            obsInfo.textContent='道'+pos.bx+'-'+(pos.bx+obsBoxW)+' 样点'+pos.by+'-'+(pos.by+obsBoxH)+' (已固定，点击解除)';
+            fetchLocalBitStats(obsFrozen);
+        }
+    });
+    gCanvas.addEventListener('mouseleave',function(){if(obsOverlay&&!obsFrozen){obsOverlay.style.display='none';obsInfo.style.display='none';}});
 }
 
 function getErr(e){return e&&e.response&&e.response.data&&e.response.data.detail?e.response.data.detail:(e.message||'未知错误');}
@@ -220,3 +293,192 @@ function _heatSign(div,grid){var rc=grid.length,cc=grid[0]?grid[0].length:0;if(r
     function hcF(t){t=Math.max(0,Math.min(1,t));var r,g,b;if(t<0.5){var s=t*2;r=Math.round(33+s*222);g=Math.round(62+s*193);b=Math.round(181+s*74);}else{var s=(t-0.5)*2;r=255;g=Math.round(255-s*220);b=Math.round(255-s*220);}return'rgb('+r+','+g+','+b+')';}
     for(var r=0;r<rc;r++){var row=grid[r]||[];for(var c=0;c<row.length;c++){var t=(row[c]+1)/2;ctx.fillStyle=hcF(t);ctx.fillRect(c*cW,r*cH,cW,cH);}}
     var lw=12,lh=Math.min(ch,200),lC=document.createElement('canvas');lC.width=lw+40;lC.height=lh;lC.style.cssText='display:block;';var lx=lC.getContext('2d');for(var s=0;s<lh;s++){lx.fillStyle=hcF(1-s/lh);lx.fillRect(0,s,lw,1);}lx.fillStyle='#666';lx.font='9px Inter';lx.fillText('+1 正',lw+3,10);lx.fillText('0',lw+3,lh/2+3);lx.fillText('-1 负',lw+3,lh-2);div.appendChild(lC);}
+
+// ===== Local Bit Stats =====
+async function fetchLocalBitStats(obs){
+    if(!sgyMeta||!sgyMeta.stored_path)return;
+    var pIdx=parseInt($('profileIdx').value)||0;
+    try{
+        var resp=await axios.get(API_BASE_URL+'/api/sgy/local-bit-stats',{
+            params:{
+                file_path:sgyMeta.stored_path, inline_idx:pIdx,
+                trace_start:obs.traceStart, trace_end:obs.traceEnd,
+                sample_start:obs.sampleStart, sample_end:obs.sampleEnd
+            }
+        });
+        var d=resp.data;
+        renderLocalZoom(d);
+        renderLocalSign(d);
+        renderLocalExp(d);
+        renderLocalMant(d);
+        renderLocalMantBits(d);
+    }catch(e){console.error('local bit stats:',e);}
+}
+
+function _viridis(t){t=Math.max(0,Math.min(1,t));var c;if(t<0.25){var s=t/0.25;c=[68+s,1+127*s,84+89*s];}else if(t<0.5){var s=(t-0.25)/0.25;c=[69,128+63*s,173-35*s];}else if(t<0.75){var s=(t-0.5)/0.25;c=[69+121*s,191+32*s,138-55*s];}else{var s=(t-0.75)/0.25;c=[190+63*s,223+8*s,83-46*s];}return 'rgb('+Math.round(c[0])+','+Math.round(c[1])+','+Math.round(c[2])+')';}
+function renderLocalZoom(d){
+    var grid=d.raw_grid, nTraces=grid.length, nSamples=grid[0]?grid[0].length:0;
+    if(nTraces===0||nSamples===0)return;
+    var cW=Math.max(3,Math.min(20,Math.floor(220/nTraces))), cH=Math.max(3,Math.min(20,Math.floor(180/nSamples)));
+    var w=nTraces*cW, h=nSamples*cH;
+    var cv=$('localZoomCanvas'); cv.width=w; cv.height=h; cv.style.width=w+'px'; cv.style.height=h+'px';
+    var ctx=cv.getContext('2d'); ctx.imageSmoothingEnabled=false;
+    var vMin=Infinity,vMax=-Infinity;
+    for(var t=0;t<nTraces;t++){var row=grid[t]||[];for(var s=0;s<row.length;s++){if(row[s]<vMin)vMin=row[s];if(row[s]>vMax)vMax=row[s];}}
+    var lo=vMin+0.02*(vMax-vMin), hi=vMax-0.02*(vMax-vMin), vR=hi-lo||1;
+    for(var si=0;si<nSamples;si++){for(var t=0;t<nTraces;t++){var row=grid[t]||[];var gs=Math.round(Math.max(0,Math.min(1,(row[si]-lo)/vR))*255);ctx.fillStyle='rgb('+gs+','+gs+','+gs+')';ctx.fillRect(t*cW,si*cH,cW,cH);}}
+}
+
+function renderLocalSign(d){
+    var s=d.sign, grid=s.grid, nTraces=grid.length, nSamples=grid[0]?grid[0].length:0;
+    if(nTraces===0||nSamples===0)return;
+    var cW=Math.max(3,Math.min(20,Math.floor(220/nTraces))), cH=Math.max(3,Math.min(20,Math.floor(180/nSamples)));
+    var w=nTraces*cW, h=nSamples*cH;
+    var cv=$('localSignCanvas'); cv.width=w; cv.height=h; cv.style.width=w+'px'; cv.style.height=h+'px';
+    var ctx=cv.getContext('2d'); ctx.imageSmoothingEnabled=false;
+    for(var si=0;si<nSamples;si++){for(var t=0;t<nTraces;t++){var row=grid[t]||[];var v=row[si]; ctx.fillStyle=v===1?'#0B79B4':'#F4F4F2'; ctx.fillRect(t*cW,si*cH,cW,cH);}}
+    ctx.fillStyle='rgba(255,255,255,.92)';ctx.strokeStyle='#B0B8C0';ctx.lineWidth=0.6;
+    ctx.beginPath();ctx.roundRect(w-62,h-36,58,32,4);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#F4F4F2';ctx.strokeStyle='#30363D';ctx.lineWidth=0.4;ctx.fillRect(w-56,h-27,12,10);ctx.strokeRect(w-56,h-27,12,10);
+    ctx.fillStyle='#0B79B4';ctx.fillRect(w-56,h-14,12,10);ctx.strokeRect(w-56,h-14,12,10);
+    ctx.fillStyle='#374151';ctx.font='9px Inter';ctx.textAlign='left';ctx.fillText('0',w-40,h-19);ctx.fillText('1',w-40,h-5);
+}
+
+function renderLocalExp(d){
+    var e=d.exponent, grid=e.grid, raw=d.raw_grid, nTraces=grid.length, nSamples=grid[0]?grid[0].length:0;
+    if(nTraces===0||nSamples===0)return;
+    var cW=Math.max(3,Math.min(20,Math.floor(220/nTraces))), cH=Math.max(3,Math.min(20,Math.floor(180/nSamples)));
+    var w=nTraces*cW, h=nSamples*cH;
+    var cv=$('localExpCanvas'); cv.width=w; cv.height=h; cv.style.width=w+'px'; cv.style.height=h+'px';
+    var ctx=cv.getContext('2d'); ctx.imageSmoothingEnabled=false;
+    var vMin=Infinity,vMax=-Infinity;
+    for(var t=0;t<nTraces;t++){var row=grid[t]||[];for(var s=0;s<row.length;s++){if(row[s]<vMin)vMin=row[s];if(row[s]>vMax)vMax=row[s];}}
+    var vR=vMax-vMin||1;
+    function drawExp(){ctx.clearRect(0,0,w,h);for(var si=0;si<nSamples;si++){for(var t=0;t<nTraces;t++){var row=grid[t]||[];ctx.fillStyle=_viridis((row[si]-vMin)/vR);ctx.fillRect(t*cW,si*cH,cW,cH);}}}
+    drawExp();
+    var lines=[{x:Math.round(nTraces*0.25), color:'#E53935'},{x:Math.round(nTraces*0.5), color:'#00B7FF'},{x:Math.round(nTraces*0.75), color:'#FF8F00'}];
+    var dragging=-1;
+    function redrawLines(){drawExp();lines.forEach(function(l){var px=l.x*cW+0.5;ctx.strokeStyle=l.color;ctx.lineWidth=1.4;ctx.setLineDash([5,3]);ctx.beginPath();ctx.moveTo(px,0);ctx.lineTo(px,h);ctx.stroke();});ctx.fillStyle='rgba(255,255,255,.92)';ctx.strokeStyle='#B0B8C0';ctx.lineWidth=0.6;ctx.setLineDash([]);ctx.beginPath();ctx.roundRect(w-62,h-54,58,50,4);ctx.fill();ctx.stroke();lines.forEach(function(l,i){ctx.strokeStyle=l.color;ctx.lineWidth=1.6;ctx.setLineDash([5,3]);ctx.beginPath();ctx.moveTo(w-56,h-44+i*16);ctx.lineTo(w-36,h-44+i*16);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#374151';ctx.font='9px Inter';ctx.textAlign='left';ctx.fillText('L'+(i+1),w-56,h-35+i*16);});}
+    redrawLines();cv.style.cursor='ew-resize';
+    cv.addEventListener('mousedown',function(e){var rect=cv.getBoundingClientRect(),mx=Math.floor((e.clientX-rect.left)/cW);for(var i=0;i<lines.length;i++){if(Math.abs(mx-lines[i].x)<=1){dragging=i;cv.style.cursor='grabbing';break;}}});
+    cv.addEventListener('mousemove',function(e){if(dragging<0){var rect=cv.getBoundingClientRect(),mx=Math.floor((e.clientX-rect.left)/cW),over=false;for(var i=0;i<lines.length;i++){if(Math.abs(mx-lines[i].x)<=1){over=true;break;}}cv.style.cursor=over?'col-resize':'ew-resize';return;}var rect=cv.getBoundingClientRect(),mx=Math.floor((e.clientX-rect.left)/cW);lines[dragging].x=Math.max(0,Math.min(nTraces-1,mx));redrawLines();renderAmpCurves(d,lines,nTraces,nSamples);});
+    document.addEventListener('mouseup',function(){dragging=-1;cv.style.cursor='ew-resize';});
+    renderAmpCurves(d,lines,nTraces,nSamples);
+}
+function renderAmpCurves(d, lines, nTraces, nSamples){
+    var raw=d.raw_grid; $('localAmpPanel').style.display='block';
+    var aw=340, ah=180, cv=$('localAmpCanvas'); cv.width=aw; cv.height=ah; cv.style.width=aw+'px'; cv.style.height=ah+'px';
+    var ctx=cv.getContext('2d'); ctx.clearRect(0,0,aw,ah);
+    var m={top:15,right:15,bottom:28,left:35}, pw=aw-m.left-m.right, ph=ah-m.top-m.bottom;
+    var gMin=Infinity,gMax=-Infinity;
+    lines.forEach(function(l){var ti=l.x; if(ti<0||ti>=nTraces)return; var row=raw[ti]||[]; for(var s=0;s<row.length;s++){if(row[s]<gMin)gMin=row[s];if(row[s]>gMax)gMax=row[s];}});
+    if(!isFinite(gMin))return;
+    var gR=gMax-gMin||1, pad=gR*0.05; gMin-=pad; gMax+=pad; gR=gMax-gMin;
+    ctx.save();ctx.translate(m.left,m.top);
+    ctx.strokeStyle='#dde';ctx.lineWidth=0.5;ctx.setLineDash([4,4]);
+    for(var g=0;g<=4;g++){var gy=Math.round(g*ph/4)+0.5;ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(pw,gy);ctx.stroke();}
+    ctx.setLineDash([]);
+    ctx.fillStyle='#6b7280';ctx.font='9px Inter';ctx.textAlign='right';
+    for(g=0;g<=4;g++){ctx.fillText((gMax-(g/4)*gR).toFixed(1),-4,Math.round(g*ph/4)+4);}
+    ctx.fillText('振幅',-4,ph/2-8);
+    lines.forEach(function(l,i){
+        var ti=l.x; if(ti<0||ti>=nTraces)return; var row=raw[ti]||[]; if(row.length===0)return;
+        ctx.strokeStyle=l.color;ctx.lineWidth=1.5;ctx.beginPath();
+        for(var s=0;s<row.length;s++){var x=(s/(row.length-1))*pw, y=(1-(row[s]-gMin)/gR)*ph; if(s===0)ctx.moveTo(x,y); else ctx.lineTo(x,y);}
+        ctx.stroke();
+    });
+    ctx.fillStyle='#6b7280';ctx.font='9px Inter';ctx.textAlign='left';
+    lines.forEach(function(l,i){ctx.fillStyle=l.color;ctx.fillRect(2,ph+10+i*12,8,8);ctx.fillStyle='#374151';ctx.fillText('L'+(i+1),13,ph+17+i*12);});
+    ctx.fillStyle='#6b7280';ctx.font='9px Inter';ctx.textAlign='center';ctx.fillText('样点 →', pw/2, ph+12);
+    ctx.restore();
+}
+
+function renderLocalMant(d){
+    var m=d.mantissa, grid=m.high_byte_grid, nTraces=grid.length, nSamples=grid[0]?grid[0].length:0;
+    if(nTraces===0||nSamples===0)return;
+    var cW=Math.max(3,Math.min(20,Math.floor(220/nTraces))), cH=Math.max(3,Math.min(20,Math.floor(180/nSamples)));
+    var w=nTraces*cW, h=nSamples*cH;
+    var cv=$('localMantCanvas'); cv.width=w; cv.height=h; cv.style.width=w+'px'; cv.style.height=h+'px';
+    var ctx=cv.getContext('2d'); ctx.imageSmoothingEnabled=false;
+    var vMin=Infinity,vMax=-Infinity;
+    for(var t=0;t<nTraces;t++){var row=grid[t]||[];for(var s=0;s<row.length;s++){if(row[s]<vMin)vMin=row[s];if(row[s]>vMax)vMax=row[s];}}
+    var vR=vMax-vMin||1;
+    for(var si=0;si<nSamples;si++){for(var t=0;t<nTraces;t++){var row=grid[t]||[];ctx.fillStyle=_viridis((row[si]-vMin)/vR);ctx.fillRect(t*cW,si*cH,cW,cH);}}
+}
+
+function switchLocalView(view){
+    $('localOverview').style.display = view==='overview'?'block':'none';
+    $('localMantBits').style.display = view==='mantbits'?'block':'none';
+    $('tabOverview').classList.toggle('active', view==='overview');
+    $('tabMantBits').classList.toggle('active', view==='mantbits');
+}
+
+function renderLocalMantBits(d){
+    var m=d.mantissa, full=m.full_grid, highBits=22, lowBits=7, nRows=full.length, nCols=full[0]?full[0].length:0;
+    if(nRows===0||nCols===0)return;
+    // Use up to 40 consecutive values (choose a middle trace)
+    var traceIdx=Math.floor(nRows/2), displayCount=Math.min(nCols,40);
+    var traceData=full[traceIdx]||[];
+    var HIGH_BITS=[22,21,20,19,18,17,16,15], LOW_BITS=[7,6,5,4,3,2,1,0];
+    var MAN_H=[22,21,20,19], MAN_L=[3,2,1,0];
+    var cellS=18, hc=HIGH_BITS.length, lc=LOW_BITS.length;
+
+    // High 8 bits canvas
+    var hw=hc*cellS, hh=displayCount*cellS;
+    var hcv=$('localMantHighCanvas'); hcv.width=hw; hcv.height=hh; hcv.style.width=hw+'px'; hcv.style.height=hh+'px';
+    var hctx=hcv.getContext('2d'); hctx.imageSmoothingEnabled=false;
+    for(var ri=0;ri<displayCount;ri++){
+        var val=full[traceIdx][ri]||0;
+        for(var bi=0;bi<hc;bi++){
+            var bit=(val>>HIGH_BITS[bi])&1, isMan=MAN_H.indexOf(HIGH_BITS[bi])>=0;
+            hctx.fillStyle=bit?(isMan?'#FCD69A':'#E5E5E5'):'#FFFFFF';
+            hctx.fillRect(bi*cellS,ri*cellS,cellS-0.5,cellS-0.5);
+        }
+    }
+    // Grid lines
+    hctx.strokeStyle='#000';hctx.lineWidth=0.45;
+    for(var gi=0;gi<=hc;gi++){hctx.beginPath();hctx.moveTo(gi*cellS-.5,0);hctx.lineTo(gi*cellS-.5,hh);hctx.stroke();}
+    for(var gi=0;gi<=displayCount;gi++){hctx.beginPath();hctx.moveTo(0,gi*cellS-.5);hctx.lineTo(hw,gi*cellS-.5);hctx.stroke();}
+    // Column labels
+    hctx.fillStyle='#374151';hctx.font='9px Inter';hctx.textAlign='center';
+    for(var bi=0;bi<hc;bi++){hctx.fillText('m'+HIGH_BITS[bi], bi*cellS+cellS/2, hh-3);}
+    // Torn right edge
+    _tornEdge(hctx, hw, hh, 'right');
+
+    // Low 8 bits canvas
+    var lw=lc*cellS, lh=displayCount*cellS;
+    var lcv=$('localMantLowCanvas'); lcv.width=lw; lcv.height=lh; lcv.style.width=lw+'px'; lcv.style.height=lh+'px';
+    var lctx=lcv.getContext('2d'); lctx.imageSmoothingEnabled=false;
+    for(var ri=0;ri<displayCount;ri++){
+        var val=full[traceIdx][ri]||0;
+        for(var bi=0;bi<lc;bi++){
+            var bit=(val>>LOW_BITS[bi])&1, isMan=MAN_L.indexOf(LOW_BITS[bi])>=0;
+            lctx.fillStyle=bit?(isMan?'#FCD69A':'#E5E5E5'):'#FFFFFF';
+            lctx.fillRect(bi*cellS,ri*cellS,cellS-0.5,cellS-0.5);
+        }
+    }
+    lctx.strokeStyle='#000';lctx.lineWidth=0.45;
+    for(var gi=0;gi<=lc;gi++){lctx.beginPath();lctx.moveTo(gi*cellS-.5,0);lctx.lineTo(gi*cellS-.5,lh);lctx.stroke();}
+    for(var gi=0;gi<=displayCount;gi++){lctx.beginPath();lctx.moveTo(0,gi*cellS-.5);lctx.lineTo(lw,gi*cellS-.5);lctx.stroke();}
+    for(var bi=0;bi<lc;bi++){lctx.fillStyle='#374151';lctx.font='9px Inter';lctx.textAlign='center';lctx.fillText('m'+LOW_BITS[bi], bi*cellS+cellS/2, lh-3);}
+    _tornEdge(lctx, 0, lh, 'left');
+
+    // Legend canvas
+    var lgw=80, lgh=110, lgcv=$('localMantLegend'); lgcv.width=lgw; lgcv.height=lgh; lgcv.style.width=lgw+'px'; lgcv.style.height=lgh+'px';
+    var lgctx=lgcv.getContext('2d');
+    var items=[{color:'#FFFFFF',label:'0'},{color:'#E5E5E5',label:'other 1'},{color:'#FCD69A',label:'managed 1'}];
+    items.forEach(function(item,i){lgctx.fillStyle=item.color;lgctx.fillRect(10,10+i*30,20,20);lgctx.strokeStyle='#000';lgctx.lineWidth=0.5;lgctx.strokeRect(10,10+i*30,20,20);lgctx.fillStyle='#374151';lgctx.font='11px Inter';lgctx.textAlign='left';lgctx.fillText(item.label,36,25+i*30);});
+}
+function _tornEdge(ctx, edgeX, rows, side){
+    var y=[], n=25; for(var i=0;i<n;i++)y.push(-0.5+i*(rows-0.5+0.5)/n);
+    var phase=y.map(function(_,i){return i%2;});
+    var offset=phase.map(function(p){return 2.5+2.5*p;});
+    var jaggedX=side==='right'?offset.map(function(o,i){return edgeX-o;}):offset.map(function(o,i){return edgeX+4-o;});
+    ctx.fillStyle='#f8f9fb';ctx.beginPath();
+    ctx.moveTo(edgeX,-1);ctx.lineTo(edgeX,rows+1);
+    for(var i=n-1;i>=0;i--)ctx.lineTo(jaggedX[i],y[i]);
+    ctx.closePath();ctx.fill();
+    ctx.strokeStyle='#000';ctx.lineWidth=1.1;ctx.beginPath();
+    for(var i=0;i<n;i++){if(i===0)ctx.moveTo(jaggedX[i],y[i]);else ctx.lineTo(jaggedX[i],y[i]);}
+    ctx.stroke();
+}

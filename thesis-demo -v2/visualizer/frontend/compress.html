@@ -33,6 +33,7 @@
         <div class="nav-links">
             <a href="index.html" class="nav-link">首页</a>
             <a href="demo.html" class="nav-link">算法演示</a>
+            <a href="demo2d.html" class="nav-link">2D 演示</a>
             <a href="general-compress.html" class="nav-link">通用压缩</a>
             <a href="sgy-viewer.html" class="nav-link">SEG-Y 查看</a>
         </div>
@@ -112,22 +113,31 @@
                         <h4>辅助文件 (可选)</h4>
                         <p class="aux-desc">上传压缩时保存的 sign.zlib 和 mant.zlib 可恢复完整 float32 数据</p>
                         <div class="aux-grid">
-                            <div class="aux-item">
-                                <label class="aux-label">sign.zlib</label>
-                                <input type="file" id="signFileInput" accept=".zlib" hidden>
-                                <button class="btn btn-outline btn-sm" onclick="document.getElementById('signFileInput').click()">
-                                    + 选择文件
-                                </button>
-                                <span class="aux-name" id="signFileName">未选择</span>
-                            </div>
-                            <div class="aux-item">
-                                <label class="aux-label">mant.zlib</label>
-                                <input type="file" id="mantFileInput" accept=".zlib" hidden>
-                                <button class="btn btn-outline btn-sm" onclick="document.getElementById('mantFileInput').click()">
-                                    + 选择文件
-                                </button>
-                                <span class="aux-name" id="mantFileName">未选择</span>
-                            </div>
+                    <div class="aux-item">
+                        <label class="aux-label">sign.zlib</label>
+                        <input type="file" id="signFileInput" accept=".zlib" hidden>
+                        <button class="btn btn-outline btn-sm" onclick="document.getElementById('signFileInput').click()">
+                            + 选择文件
+                        </button>
+                        <span class="aux-name" id="signFileName">未选择</span>
+                    </div>
+                    <div class="aux-item">
+                        <label class="aux-label">mant.zlib</label>
+                        <input type="file" id="mantFileInput" accept=".zlib" hidden>
+                        <button class="btn btn-outline btn-sm" onclick="document.getElementById('mantFileInput').click()">
+                            + 选择文件
+                        </button>
+                        <span class="aux-name" id="mantFileName">未选择</span>
+                    </div>
+                    <div class="aux-item">
+                        <label class="aux-label">headers.json</label>
+                        <input type="file" id="headersFileInput" accept=".json" hidden>
+                        <button class="btn btn-outline btn-sm" onclick="document.getElementById('headersFileInput').click()">
+                            + 选择文件
+                        </button>
+                        <span class="aux-name" id="headersFileName">未选择</span>
+                        <span class="help-text">上传 sgy_headers.json 可重建完整 SGY（含头文件）</span>
+                    </div>
                         </div>
                     </div>
                 </div>

@@ -97,14 +97,78 @@
                     <p class="section-desc">选择剖面索引查看地震数据二维切片</p>
                 </header>
                 <div class="sgy-heatbar">
-                    <div class="control-group"><label>剖面索引</label><input type="number" class="config-input" id="profileIdx" value="0" min="0" style="width:120px;"></div>
+                    <div class="control-group"><label>剖面索引</label><input type="number" class="config-input" id="profileIdx" value="0" min="0" style="width:100px;"></div>
                     <span id="profileRange" style="color:var(--text-muted);font-size:0.875rem;"></span>
-                    <button class="btn btn-primary" id="loadHeatmapBtn">加载热力图</button>
+                    <button class="btn btn-primary" id="loadHeatmapBtn">加载</button>
+                    <div style="display:flex;gap:0;margin-left:auto;">
+                        <button class="gs-tab-btn active" id="tabHeatmap" onclick="switchSgyView('heatmap')">热力图</button>
+                        <button class="gs-tab-btn" id="tabGray" onclick="switchSgyView('gray')">灰度分析</button>
+                    </div>
                 </div>
+                <!-- VIEW: Heatmap -->
+                <div id="viewHeatmap">
                 <div id="heatmapContainer" class="sgy-heatmap-box">
                     <div class="chart-placeholder">加载热力图后在此显示...</div>
                 </div>
-                <div id="heatmapInfo" style="text-align:center;margin-top:var(--spacing-sm);color:var(--text-muted);font-size:0.875rem;"></div>
+                <div id="heatmapInfo" style="text-align:center;margin-top:4px;color:var(--text-muted);font-size:0.75rem;"></div>
+                </div>
+                <!-- VIEW: Grayscale + Local Stats -->
+                <div id="viewGray" style="display:none;">
+                <div class="sgy-heatmap-row">
+                <div class="sgy-gray-col">
+                <div id="grayContainer" class="sgy-heatmap-box" style="position:relative;">
+                    <div class="chart-placeholder">加载热力图后在此显示...</div>
+                </div>
+                </div>
+                <div id="localObserve" class="sgy-local-col">
+                    <div class="panel-title">局部位统计
+                        <button class="gs-tab-btn active" id="tabOverview" onclick="switchLocalView('overview')" style="margin-left:auto;font-size:10px;padding:2px 8px;">概览</button>
+                        <button class="gs-tab-btn" id="tabMantBits" onclick="switchLocalView('mantbits')" style="font-size:10px;padding:2px 8px;">尾数位</button>
+                    </div>
+                    <div id="localOverview">
+                    <div class="local-stats-grid" id="localStatsGrid">
+                        <div class="local-chart-box">
+                            <div class="local-chart-title">局部放大</div>
+                            <canvas id="localZoomCanvas"></canvas>
+                        </div>
+                        <div class="local-chart-box">
+                            <div class="local-chart-title">符号位分布</div>
+                            <canvas id="localSignCanvas"></canvas>
+                        </div>
+                        <div class="local-chart-box">
+                            <div class="local-chart-title">指数位分布 (拖动纵线)</div>
+                            <canvas id="localExpCanvas"></canvas>
+                        </div>
+                        <div class="local-chart-box">
+                            <div class="local-chart-title">尾数位分布</div>
+                            <canvas id="localMantCanvas"></canvas>
+                        </div>
+                    </div>
+                    <div class="local-amp-panel" id="localAmpPanel" style="display:none;">
+                        <div class="local-chart-title" style="margin-top:6px;">振幅曲线</div>
+                        <canvas id="localAmpCanvas"></canvas>
+                    </div>
+                    </div>
+                    <div id="localMantBits" style="display:none;">
+                        <div style="display:flex;align-items:center;gap:0;">
+                            <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+                                <div class="local-chart-title">高 8 位 (m22–m15)</div>
+                                <canvas id="localMantHighCanvas"></canvas>
+                            </div>
+                            <div style="color:var(--text-muted);font-size:10px;padding:0 4px;text-align:center;">···<br>fold<br>m14:m8</div>
+                            <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+                                <div class="local-chart-title">低 8 位 (m7–m0)</div>
+                                <canvas id="localMantLowCanvas"></canvas>
+                            </div>
+                            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:60px;">
+                                <div class="local-chart-title">图例</div>
+                                <canvas id="localMantLegend"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                </div>
+                </div>
             </section>
 
             <!-- Step 2: Waveform -->

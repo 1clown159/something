@@ -8,6 +8,7 @@ let ws = null;
 let currentMode = 'compress'; // 'compress' | 'decompress'
 let signFile = null;
 let mantFile = null;
+let headersFile = null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -114,6 +115,10 @@ function initUpload() {
     if (mantInput) mantInput.addEventListener('change', function(e) {
         if (e.target.files.length > 0) { mantFile = e.target.files[0]; $('mantFileName').textContent = mantFile.name; }
     });
+    var headersInput = $('headersFileInput');
+    if (headersInput) headersInput.addEventListener('change', function(e) {
+        if (e.target.files.length > 0) { headersFile = e.target.files[0]; $('headersFileName').textContent = headersFile.name; }
+    });
 }
 
 async function handleFileUpload(file) {
@@ -185,12 +190,14 @@ function resetUpload() {
     AppState.reset();
     signFile = null;
     mantFile = null;
+    headersFile = null;
     $('fileInput').value = '';
     $('uploadZone').style.display = 'block';
     $('filePanel').style.display = 'none';
     $('taskInfo').style.display = 'none';
     $('signFileName').textContent = '未选择';
     $('mantFileName').textContent = '未选择';
+    $('headersFileName').textContent = '未选择';
     nav.reset();
     nav.setStepEnabled(1, false);
     nav.setStepEnabled(2, false);
@@ -228,6 +235,7 @@ async function startStandaloneDecompress() {
         formData.append('output_format', 'bin');
         if (signFile) formData.append('sign_file', signFile);
         if (mantFile) formData.append('mant_file', mantFile);
+        if (headersFile) formData.append('headers_file', headersFile);
 
         var resp = await axios.post(API_BASE_URL + '/api/decompress-file', formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
@@ -349,14 +357,42 @@ function onDecompressDone(status) {
         $('progressStatus').textContent = '完成';
         updateNavStatus('ready', '解压完成');
         logMessage('compressLog', '解压完成!', 'success');
-        
+
+        var totalUpload = status.file_size || 0;
+        var s4rc = status.s4rc_size || 0;
+        var signSz = status.sign_size || 0;
+        var mantSz = status.mant_size || 0;
+
         var result = {
             original_size: 0,
             decompressed_size: status.decompressed_size || 0,
-            bitstream_size: status.file_size || 0,
+            bitstream_size: totalUpload,
             has_aux: !!(signFile || mantFile),
         };
         updateResults(result, true);
+
+        if (signSz || mantSz) {
+            logMessage('compressLog',
+                '上传文件: s4rc=' + formatFileSize(s4rc) +
+                ' + sign=' + formatFileSize(signSz) +
+                ' + mant=' + formatFileSize(mantSz) +
+                ' = 合计 ' + formatFileSize(totalUpload));
+        }
+        if (status.has_aux_files) {
+            logMessage('compressLog', '已使用 sign/mant 恢复完整 float32 数据', 'success');
+        } else {
+            logMessage('compressLog', '未提供辅助文件，仅解压指数部分', 'warning');
+        }
+        if (status.reconstructed_sgy) {
+            logMessage('compressLog', '✓ 已使用 headers.json 重建完整 SGY（含头文件）', 'success');
+        }
+        if (status.original_data_size && status.decompressed_size) {
+            var matchSize = status.decompressed_size === status.original_data_size;
+            logMessage('compressLog',
+                (matchSize ? '✓' : '✗') + ' 大小验证: 解压 ' + formatFileSize(status.decompressed_size) +
+                ' / 预期 ' + formatFileSize(status.original_data_size),
+                matchSize ? 'success' : 'error');
+        }
         nav.setStepEnabled(2, true);
         nav.markStepDone(1);
         setTimeout(function() { nav.goToStep(2); }, 800);
@@ -393,6 +429,8 @@ function updateResults(output, isDecompress) {
         $('compressTime').textContent = '-';
         $('originalSizeText').textContent = output.bitstream_size ? formatFileSize(output.bitstream_size) : '-';
         $('compressedSizeText').textContent = output.decompressed_size ? formatFileSize(output.decompressed_size) : '-';
+        $('originalSizeBar').style.width = '100%';
+        $('compressedSizeBar').style.width = output.bitstream_size ? Math.min(100, (output.decompressed_size / Math.max(1, output.bitstream_size)) * 100) + '%' : '0%';
         logMessage('resultLog', '解压完成!', 'success');
         if (output.has_aux) {
             logMessage('resultLog', '已使用 sign/mant 辅助文件恢复完整 float32 数据');

@@ -412,9 +412,9 @@
         console.log('[refreshCurrentStep] idx='+idx+' hasRealData='+hasRealData());
         if(!hasRealData()){
             updateCoordDisplay(); updateMetrics(idx);
-            return;
+            return Promise.resolve();
         }
-        fetchStepData(idx).then(function(){
+        return fetchStepData(idx).then(function(){
             console.log('[refreshCurrentStep] fetch done, rendering idx='+idx);
             updateCoordDisplay(); updateMetrics(idx);
             var slider=document.getElementById('sampleSlider'), val=document.getElementById('sampleIdxVal');
@@ -452,8 +452,7 @@
         document.getElementById('btnLoadSGY').addEventListener('click',function(){document.getElementById('sgyFileInput').click();});
         document.getElementById('sgyFileInput').addEventListener('change',onSGYFileSelected);
         var sl=document.getElementById('sampleSlider'),sp=document.getElementById('speedSlider');
-        if(sl){sl.addEventListener('input',function(e){State.sampleIndex=parseInt(e.target.value);document.getElementById('sampleIdxVal').textContent=State.sampleIndex;updateCoordDisplay();updateMetrics(State.currentStep);});
-               sl.addEventListener('change',function(){refreshCurrentStep();});}
+        if(sl){sl.addEventListener('input',function(e){State.sampleIndex=parseInt(e.target.value);document.getElementById('sampleIdxVal').textContent=State.sampleIndex;updateCoordDisplay();updateMetrics(State.currentStep);refreshCurrentStep();});}
         if(sp)sp.addEventListener('input',function(e){State.speed=parseInt(e.target.value);document.getElementById('speedVal').textContent=State.speed;if(State.isPlaying){stopPlayback();startPlayback();}});
     }
 

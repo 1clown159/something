@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>算法演示 2D | Stage4</title>
+    <style>
+        :root {
+            --bg: #f8f9fb; --bg2: #fff; --panel: #f8f9fb;
+            --border: #dde; --text: #1a1a2e; --text2: #475569; --text3: #6b7280;
+            --cyan: #06b6d4; --pink: #ec4899; --amber: #f59e0b; --green: #10b981; --red: #ef4444;
+            --accent: #5b6af0;
+        }
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{background:var(--bg);color:var(--text);font-family:'Inter','Segoe UI',system-ui,sans-serif;overflow:hidden;height:100vh}
+        .top-nav{display:flex;align-items:center;justify-content:space-between;padding:0 24px;background:#fff;border-bottom:1px solid var(--border);height:56px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+        .logo{font-size:17px;font-weight:700;display:flex;align-items:center;gap:10px}
+        .logo span{background:linear-gradient(90deg,var(--accent),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .nav-links{display:flex;gap:4px;padding:4px;background:rgba(0,0,0,.03);border-radius:10px}
+        .nav-link{padding:6px 14px;border-radius:8px;color:var(--text2);text-decoration:none;font-size:13px;transition:all .2s}
+        .nav-link:hover{color:var(--text);background:rgba(0,0,0,.05)}
+        .step-tabs{display:flex;gap:4px;padding:4px;background:#fff;border:1px solid var(--border);border-radius:10px}
+        .step-tab{padding:7px 15px;border-radius:7px;border:none;background:transparent;color:var(--text2);cursor:pointer;font-size:12px;font-weight:500;transition:all .25s;font-family:inherit}
+        .step-tab:hover{color:var(--text)}
+        .step-tab.active{background:linear-gradient(135deg,var(--accent),var(--pink));color:#fff;box-shadow:0 4px 16px rgba(91,106,240,.3)}
+        .main-container{display:grid;grid-template-columns:270px 1fr 310px;gap:1px;background:var(--border);height:calc(100vh - 56px)}
+        .panel{background:#fff;overflow-y:auto;padding:20px}
+        .panel-title{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+        .panel-title::after{content:"";flex:1;height:1px;background:var(--border)}
+        .ctrl-group{margin-bottom:18px}
+        .ctrl-label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:500}
+        .ctrl-select,.ctrl-input{width:100%;padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:#f8f9fb;color:var(--text);font-size:12px;outline:none;font-family:inherit;transition:border .2s}
+        .ctrl-select:focus,.ctrl-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(91,106,240,.1)}
+        input[type=range]{width:100%;-webkit-appearance:none;height:5px;border-radius:3px;background:#e8ecf1;outline:none}
+        input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--accent);cursor:pointer;box-shadow:0 0 8px rgba(91,106,240,.3)}
+        .slider-val{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent);float:right}
+        .btn-row{display:flex;gap:8px;margin-top:20px}
+        .btn{flex:1;padding:9px;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:5px;font-family:inherit}
+        .btn-primary{background:linear-gradient(135deg,var(--accent),var(--pink));color:#fff}
+        .btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(91,106,240,.35)}
+        .btn-secondary{background:#f0f1f5;color:var(--text);border:1px solid var(--border)}
+        .btn-secondary:hover{border-color:var(--accent);color:var(--accent)}
+        .btn-upload{width:100%;margin-bottom:4px}
+        .status-badge{display:inline-block;padding:4px 10px;border-radius:20px;font-size:10px;font-weight:600}
+        .status-running{background:rgba(16,185,129,.08);color:#065f46;border:1px solid rgba(16,185,129,.2)}
+        .status-paused{background:rgba(245,158,11,.08);color:#92400e;border:1px solid rgba(245,158,11,.2)}
+        .stage{display:flex;flex-direction:column;align-items:center;justify-content:center;background:#e8ecf1;overflow:hidden;position:relative}
+        .stage-title{position:absolute;top:18px;left:0;right:0;text-align:center;z-index:5;font-size:18px;font-weight:700;pointer-events:none;color:var(--text)}
+        .stage-subtitle{font-size:12px;color:var(--text2);margin-top:4px;font-weight:400}
+        .canvas-container{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+        canvas{display:block}
+        .formula-box{background:#f4f5f9;border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-family:'JetBrains Mono','Consolas',monospace;font-size:11px;line-height:1.6;color:#1e293b;margin-bottom:14px;overflow-x:auto}
+        .formula-box .cm{color:var(--text3)}.formula-box .kw{color:var(--pink)}.formula-box .st{color:var(--amber)}
+        .info-txt{font-size:12px;line-height:1.7;color:var(--text2);margin-bottom:14px}
+        .metric-card{background:#fff;border-radius:8px;padding:11px 14px;margin-bottom:7px;border:1px solid var(--border);border-left:3px solid var(--accent)}
+        .metric-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
+        .metric-value{font-size:16px;font-weight:700;color:var(--text);font-family:'JetBrains Mono',monospace}
+        .metric-unit{font-size:11px;color:var(--text3);margin-left:3px}
+        .coord-box{background:#f8f9fb;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.8;color:var(--text2)}
+        .coord-box span{color:var(--accent);font-weight:600}
+        .load-status{font-size:10px;color:var(--text3);margin-top:4px}
+        .loading-overlay{position:fixed;inset:0;z-index:100;background:rgba(248,249,251,.85);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+        .loading-spinner{width:38px;height:38px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        @keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#c0c0c8;border-radius:3px}
+        @media(max-width:1100px){.main-container{grid-template-columns:220px 1fr 260px}}
+    </style>
+</head>
+<body>
+    <nav class="top-nav">
+        <div class="logo"><span>◈ Stage4</span> 2D 算法演示</div>
+        <div style="display:flex;align-items:center;gap:16px">
+            <div class="step-tabs" id="stepTabs">
+                <button class="step-tab active" data-step="0">1. Bit 拆解</button>
+                <button class="step-tab" data-step="1">2. 特征提取</button>
+                <button class="step-tab" data-step="2">3. CNN 预测</button>
+                <button class="step-tab" data-step="3">4. Range Coding</button>
+            </div>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">首页</a>
+                <a href="demo.html" class="nav-link">3D 演示</a>
+                <a href="compress.html" class="nav-link">压缩工具</a>
+                <a href="general-compress.html" class="nav-link">通用压缩</a>
+                <a href="sgy-viewer.html" class="nav-link">SEG-Y</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <!-- LEFT PANEL -->
+        <aside class="panel">
+            <div class="panel-title">控制面板</div>
+            <div class="ctrl-group">
+                <label class="ctrl-label">数据源 <span id="srcLabel" style="color:var(--amber);font-weight:600">无数据</span></label>
+                <input type="file" id="sgyInput" accept=".sgy,.segy" hidden>
+                <button class="btn btn-secondary btn-upload" id="btnUpload">加载 SEG-Y 文件</button>
+                <div class="load-status" id="loadStatus"></div>
+            </div>
+            <div class="ctrl-group">
+                <label class="ctrl-label">采样点 <span class="slider-val" id="sampleVal">0</span></label>
+                <input type="range" id="sampleSlider" min="0" max="399" value="0">
+            </div>
+            <div class="ctrl-group">
+                <label class="ctrl-label">播放速度 <span class="slider-val" id="speedVal">3</span></label>
+                <input type="range" id="speedSlider" min="1" max="10" value="3">
+            </div>
+            <div class="btn-row">
+                <button class="btn btn-primary" id="btnPlay">播放</button>
+                <button class="btn btn-secondary" id="btnPause">暂停</button>
+            </div>
+            <div style="margin-top:10px"><span class="status-badge status-paused" id="statusBadge">已暂停</span></div>
+            <div class="ctrl-group" style="margin-top:20px">
+                <label class="ctrl-label">当前坐标</label>
+                <div class="coord-box">
+                    Profile: <span id="coordP">0</span><br>Trace: <span id="coordT">0</span><br>Sample: <span id="coordS">0</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- CENTER STAGE -->
+        <main class="stage" id="centerStage">
+            <div class="stage-title">
+                <div id="stageTitle">IEEE 754 Float32 Bit 拆解</div>
+                <div class="stage-subtitle" id="stageSub">将 32-bit 浮点数拆解为 Sign / Exponent / Mantissa</div>
+            </div>
+            <div class="canvas-container" id="canvasContainer">
+                <canvas id="mainCanvas"></canvas>
+            </div>
+        </main>
+
+        <!-- RIGHT PANEL -->
+        <aside class="panel">
+            <div class="panel-title">原理与公式</div>
+            <div class="formula-box" id="formulaBox"></div>
+            <p class="info-txt" id="infoText"></p>
+            <div class="panel-title" style="margin-top:20px">实时指标</div>
+            <div id="metricsContent"></div>
+        </aside>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div style="color:var(--text2);font-size:13px" id="loadingText">处理中...</div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+    (function(){
+    'use strict';
+    var API = 'http://localhost:8000';
+    var State={step:0,playing:false,interval:null,sampleIdx:0,speed:3,sampleCount:400,
+        taskId:null,fileName:'',stats:null,apiData:{}};
+    var canvas,ctx,cw,ch;
+
+    // ===== FIND FIRST NON-ZERO =====
+    async function findFirstNonZero(){
+        if(!State.taskId)return;
+        for(var i=0;i<Math.min(State.sampleCount,200);i+=5){
+            try{
+                var r=await axios.post(API+'/api/demo/decompose',{task_id:State.taskId,sample_index:i});
+                if(r.data&&r.data.original&&Math.abs(r.data.original)>1e-6){
+                    State.sampleIdx=i;
+                    document.getElementById('sampleSlider').value=i;
+                    document.getElementById('sampleVal').textContent=i;
+                    document.getElementById('loadStatus').textContent='就绪 ('+State.sampleCount+'点，跳至 #'+i+')';
+                    gotoStep(State.step);
+                    return;
+                }
+            }catch(e){}
+        }
+        document.getElementById('loadStatus').textContent='就绪 ('+State.sampleCount+'点)';
+    }
+
+    // ===== INIT =====
+    function init(){
+        canvas=document.getElementById('mainCanvas');
+        ctx=canvas.getContext('2d');
+        var cc=document.getElementById('canvasContainer');
+        cw=cc.clientWidth;ch=cc.clientHeight;
+        if(cw===0||ch===0){cw=800;ch=600;}
+        canvas.width=cw*Math.min(window.devicePixelRatio||1,2);
+        canvas.height=ch*Math.min(window.devicePixelRatio||1,2);
+        ctx.scale(Math.min(window.devicePixelRatio||1,2),Math.min(window.devicePixelRatio||1,2));
+        canvas.style.width=cw+'px';canvas.style.height=ch+'px';
+        bindEvents(); gotoStep(0);
+    }
+    window.addEventListener('resize',function(){
+        var cc=document.getElementById('canvasContainer');
+        cw=cc.clientWidth;ch=cc.clientHeight;
+        canvas.width=cw*Math.min(window.devicePixelRatio||1,2);
+        canvas.height=ch*Math.min(window.devicePixelRatio||1,2);
+        ctx.setTransform(Math.min(window.devicePixelRatio||1,2),0,0,Math.min(window.devicePixelRatio||1,2),0,0);
+        canvas.style.width=cw+'px';canvas.style.height=ch+'px';
+        renderStep();
+    });
+
+    // ===== EVENTS =====
+    function bindEvents(){
+        document.getElementById('btnUpload').addEventListener('click',function(){document.getElementById('sgyInput').click();});
+        document.getElementById('sgyInput').addEventListener('change',onFileSelected);
+        document.querySelectorAll('.step-tab').forEach(function(t){
+            t.addEventListener('click',function(){gotoStep(parseInt(t.dataset.step));});
+        });
+        document.getElementById('btnPlay').addEventListener('click',startPlay);
+        document.getElementById('btnPause').addEventListener('click',stopPlay);
+        document.getElementById('sampleSlider').addEventListener('input',function(e){
+            State.sampleIdx=parseInt(e.target.value);document.getElementById('sampleVal').textContent=State.sampleIdx;
+            if(State.taskId){gotoStep(State.step);}
+        });
+        document.getElementById('speedSlider').addEventListener('input',function(e){
+            State.speed=parseInt(e.target.value);document.getElementById('speedVal').textContent=State.speed;
+        });
+        document.addEventListener('keydown',function(e){
+            if(e.key==='ArrowRight')gotoStep(Math.min(State.step+1,3));
+            if(e.key==='ArrowLeft')gotoStep(Math.max(State.step-1,0));
+            if(e.key===' '){e.preventDefault();State.playing?stopPlay():startPlay();}
+        });
+    }
+
+    // ===== UPLOAD =====
+    async function onFileSelected(e){
+        var f=e.target.files[0];if(!f)return;
+        var st=document.getElementById('loadStatus'),btn=document.getElementById('btnUpload');
+        st.textContent='上传并初始化...';btn.textContent='处理中...';
+        try{
+            var fd=new FormData();fd.append('file',f);
+            var r=await axios.post(API+'/api/demo/upload-sgy',fd,{headers:{'Content-Type':'multipart/form-data'},timeout:180000});
+            if(r.data&&r.data.task_id){
+                State.taskId=r.data.task_id;State.fileName=r.data.filename;State.sampleCount=r.data.sample_count||400;
+                State.sampleIdx=0;State.apiData={};
+                document.getElementById('sampleSlider').max=State.sampleCount-1;
+                document.getElementById('srcLabel').textContent='真实 ('+State.sampleCount+'点)';
+                document.getElementById('srcLabel').style.color='var(--green)';
+                st.textContent='就绪 ('+State.sampleCount+'采样点)';
+                await gotoStep(State.step);
+                setTimeout(function(){findFirstNonZero();},1000);
+            }else{st.textContent='上传失败';}
+        }catch(err){console.error(err);st.textContent='失败: '+(err.message||'');}
+        btn.textContent='加载 SEG-Y 文件';
+    }
+
+    // ===== COORD =====
+    function getCoord(){
+        var t=State.sampleIdx,s=t%100,tc=Math.floor(t/100)%2,pc=Math.floor(t/200)%2;
+        return[pc,tc,s];
+    }
+    function updateCoord(){
+        var c=getCoord();
+        document.getElementById('coordP').textContent=c[0];
+        document.getElementById('coordT').textContent=c[1];
+        document.getElementById('coordS').textContent=c[2];
+    }
+
+    // ===== API FETCH =====
+    async function fetchData(idx){
+        if(!State.taskId){State.apiData={};return;}
+        var si=State.sampleIdx;
+        State.apiData={};
+        try{
+            if(idx===0){
+                var r=await axios.post(API+'/api/demo/decompose',{task_id:State.taskId,sample_index:si});
+                if(r.data&&r.data.sign!==undefined)State.apiData.step0=r.data;
+                else console.warn('decompose empty:',r.data);
+            }else if(idx===1){
+                var r1=await axios.post(API+'/api/demo/features',{task_id:State.taskId,sample_index:si});
+                if(r1.data&&r1.data.channels)State.apiData.features=r1.data;
+                else console.warn('features empty:',r1.data);
+            }else if(idx===2){
+                var r2=await axios.post(API+'/api/demo/predict',{task_id:State.taskId,sample_index:si});
+                if(r2.data&&r2.data.probabilities)State.apiData.predict=r2.data;
+                else console.warn('predict empty:',r2.data);
+            }else if(idx===3){
+                var r3a=await axios.post(API+'/api/demo/predict',{task_id:State.taskId,sample_index:si});
+                if(r3a.data&&r3a.data.probabilities)State.apiData.predict=r3a.data;
+                else console.warn('predict(3) empty:',r3a.data);
+                var r3b=await axios.post(API+'/api/demo/encode',{task_id:State.taskId,sample_index:si});
+                if(r3b.data&&r3b.data.symbol!==undefined)State.apiData.encode=r3b.data;
+                else console.warn('encode empty:',r3b.data);
+            }
+        }catch(e){
+            console.error('fetchData step='+idx+':',e);
+            if(e.response){console.error('  status:',e.response.status,'body:',e.response.data);}
+            else{console.error('  network:',e.message);}
+        }
+    }
+
+    // ===== METRICS =====
+    var titles=['IEEE 754 Float32 Bit 拆解','因果 Patch 特征提取','CNN 概率预测','Range 编码'],
+        subs=['Sign + Exponent + Mantissa 三通道分解','对角扫描 + 17×17 因果上下文','Small2DCNN → 256-class Softmax','CDF 量化 + 递归区间缩窄'],
+        formulas=[
+            '<span class="cm"># IEEE 754 Float32</span>\n<span class="kw">def</span> extract(data):\n  u32 = data.view(\"uint32\")\n  sign  = (u32 >> 31) & 1\n  exp   = (u32 >> 23) & 0xFF\n  mant  = u32 & 0x7FFFFF',
+            '<span class="cm"># causal_edge 特征</span>\nfeature = build_features(\n  exps, coord,\n  patch=(9,17),\n  mode=<span class="st">"diagonal"</span>\n)',
+            '<span class="cm"># CNN 推理</span>\nlogits = Small2DCNN(patch)\nprobs = softmax(logits)\n<span class="cm"># 256 类输出</span>',
+            '<span class="cm"># Range 编码</span>\ncdf = cumsum(probs)\nlow += range × cdf[sym]\nrange = range × prob[sym]'
+        ],
+        infos=[
+            'Float32 = 1 Sign + 8 Exponent + 23 Mantissa。当前展示真实 SEG-Y 采样点的位拆解。',
+            '只使用已编码空间位置作为因果上下文。粉色标记为当前采样点所在位置。',
+            'Small2DCNN 接收 17×17×C 因果 Patch，输出 256 类概率。粉色 beacon 标记真实 Symbol。',
+            '概率分布→CDF→Range Encoder 根据符号区间缩窄编码。绿色高亮为输出 bits。'
+        ];
+    function updateInfo(idx){
+        document.getElementById('stageTitle').textContent=titles[idx];
+        document.getElementById('stageSub').textContent=subs[idx];
+        document.getElementById('formulaBox').innerHTML=formulas[idx];
+        document.getElementById('infoText').textContent=infos[idx];
+    }
+    function updateMetrics(){
+        var mc=document.getElementById('metricsContent');
+        if(!State.taskId){mc.innerHTML='<div class="metric-card"><div class="metric-label">状态</div><div class="metric-value" style="font-size:12px;color:var(--amber)">请先加载 SEG-Y</div></div>';return;}
+        var idx=State.step,d;
+        if(idx===0){
+            d=State.apiData.step0;
+            if(!d)mc.innerHTML='<div class="metric-card"><div class="metric-label">加载中...</div></div>';
+            else mc.innerHTML='<div class="metric-card" style="border-left-color:var(--red)"><div class="metric-label">Sign</div><div class="metric-value">'+d.sign+'<span class="metric-unit">bit</span></div></div>'+
+                '<div class="metric-card" style="border-left-color:var(--amber)"><div class="metric-label">Exponent</div><div class="metric-value">'+(d.exp_raw||d.exp)+'<span class="metric-unit">biased</span></div></div>'+
+                '<div class="metric-card" style="border-left-color:var(--cyan)"><div class="metric-label">Mantissa</div><div class="metric-value">0x'+(d.mant||0).toString(16).toUpperCase().padStart(6,'0')+'</div></div>';
+        }else if(idx===1){
+            d=State.apiData.features;
+            if(!d)mc.innerHTML='<div class="metric-card"><div class="metric-label">加载中...</div></div>';
+            else mc.innerHTML='<div class="metric-card"><div class="metric-label">Patch</div><div class="metric-value">'+(d.patch_shape||[]).join('×')+'</div></div>'+
+                '<div class="metric-card"><div class="metric-label">通道</div><div class="metric-value">'+(d.channels?d.channels.length:0)+'</div></div>';
+        }else if(idx===2||idx===3){
+            d=State.apiData.predict;
+            var e=State.apiData.encode;
+            if(!d)mc.innerHTML='<div class="metric-card"><div class="metric-label">加载中...</div></div>';
+            else{
+                mc.innerHTML='<div class="metric-card"><div class="metric-label">真实 Symbol</div><div class="metric-value">'+d.actual_symbol+'</div></div>'+
+                    '<div class="metric-card"><div class="metric-label">熵 H</div><div class="metric-value">'+(d.entropy||0).toFixed(3)+'<span class="metric-unit">bits</span></div></div>';
+                if(e)mc.innerHTML+='<div class="metric-card" style="border-left-color:var(--amber)"><div class="metric-label">Range</div><div class="metric-value">['+e.range_low.toFixed(3)+', '+e.range_high.toFixed(3)+')</div></div>'+
+                    '<div class="metric-card" style="border-left-color:var(--cyan)"><div class="metric-label">Bits</div><div class="metric-value">'+e.bits_output+'</div></div>';
+            }
+        }
+    }
+
+    // ===== RENDER STEP 1: BIT DECOMP =====
+    function renderStep1(){
+        var d=State.apiData.step0;
+        ctx.clearRect(0,0,cw,ch);
+        if(!d||d.sign===undefined){drawMsg('请先加载 SEG-Y 文件');return;}
+        var bits=[],colors={sign:'#ef4444',exp:'#f59e0b',mant:'#06b6d4'};
+        bits.push({val:d.sign,type:'sign',idx:31});
+        var e=d.exp_raw!==undefined?d.exp_raw:(d.exp||0),m=d.mant!==undefined?d.mant:0;
+        for(var i=7;i>=0;i--)bits.push({val:(e>>i)&1,type:'exp',idx:23+i});
+        for(var i=22;i>=0;i--)bits.push({val:(m>>i)&1,type:'mant',idx:i});
+        var bs=Math.min(34,(cw-80)/32),gap=4,sX=(cw-32*(bs+gap))/2,sY=ch/2-70;
+        ctx.font='bold 13px "Inter","Segoe UI",sans-serif';ctx.fillStyle='#374151';ctx.textAlign='center';
+        ctx.fillText('Bit 31 (MSB) \u2190  \u2192 Bit 0 (LSB) \u2014 \u771F\u5B9E SEG-Y \u6570\u636E',cw/2,sY-28);
+        var panelW=32*(bs+gap)+40,panelH=bs*1.3+120;
+        ctx.fillStyle='rgba(0,0,0,.02)';ctx.beginPath();ctx.roundRect((cw-panelW)/2,sY-20,panelW,panelH,12);ctx.fill();
+        ctx.strokeStyle='rgba(0,0,0,.08)';ctx.lineWidth=1;ctx.stroke();
+        bits.forEach(function(b,i){
+            var x=sX+i*(bs+gap),y=sY;
+            ctx.shadowColor=colors[b.type];ctx.shadowBlur=b.val?14:0;
+            ctx.fillStyle=b.val?colors[b.type]:'#dde2e8';ctx.strokeStyle=colors[b.type];ctx.lineWidth=2;
+            ctx.beginPath();ctx.roundRect(x,y,bs,bs*1.3,4);ctx.fill();ctx.stroke();ctx.shadowBlur=0;
+            ctx.fillStyle=b.val?'#fff':'#6b7280';ctx.font='bold '+(bs*.5)+'px "JetBrains Mono","Courier New",monospace';
+            ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(b.val,x+bs/2,y+bs*.45);
+            ctx.fillStyle='#9ca3af';ctx.font=(bs*.25)+'px "JetBrains Mono",monospace';ctx.fillText(b.idx,x+bs/2,y+bs*1.1);
+        });ctx.textBaseline='alphabetic';
+        ctx.font='11px "Inter","Segoe UI",sans-serif';ctx.textAlign='center';
+        ctx.fillStyle=colors.sign;ctx.fillText('Sign (1bit)',sX+bs/2,sY+bs*1.8);
+        ctx.fillStyle=colors.exp;ctx.fillText('Exponent (8bits)',sX+bs+gap+(bs*8+gap*7)/2,sY+bs*1.8);
+        ctx.fillStyle=colors.mant;ctx.fillText('Mantissa (23bits)',sX+(bs+gap)*9+(bs*23+gap*22)/2,sY+bs*1.8);
+        var valY=sY+bs*2.6,v=d.original!==undefined?d.original:0;
+        ctx.font='bold 26px "JetBrains Mono",monospace';ctx.fillStyle='#111827';ctx.textAlign='center';
+        ctx.fillText(v.toExponential(6),cw/2,valY);
+        ctx.font='12px "Inter",sans-serif';ctx.fillStyle='#374151';
+        ctx.fillText('Sign:'+d.sign+'    Exponent:'+e+' (biased)    Mantissa:0x'+m.toString(16).toUpperCase().padStart(6,'0'),cw/2,valY+26);
+    }
+
+    // ===== RENDER STEP 2: FEATURES =====
+    var patchAngle=0;
+    function renderStep2(){
+        patchAngle+=0.005;
+        var d=State.apiData.features;
+        ctx.clearRect(0,0,cw,ch);
+        var cx=cw/2,cy=ch/2,size=Math.min(cw,ch)*.32,gs=8,cs=size/gs;
+        for(var z=0;z<gs;z++)for(var y=0;y<gs;y++)for(var x=0;x<gs;x++){
+            var px=cx+(x-gs/2)*cs*Math.cos(patchAngle)-(z-gs/2)*cs*Math.sin(patchAngle)*.5;
+            var py=cy+(y-gs/2)*cs*.7+(z-gs/2)*cs*.3;
+            var di=x+y+z,cd=(State.sampleIdx%(gs*3)),isC=di<cd,isCur=di===cd;
+            var col,al;
+            if(isCur){col='#ec4899';al=1;}else if(isC){col='#06b6d4';al=.85;}else{col='#c0c0c8';al=.45;}
+            ctx.globalAlpha=al;ctx.fillStyle=col;
+            var csz=cs*.7;ctx.beginPath();ctx.roundRect(px-csz/2,py-csz/2,csz,csz,2);ctx.fill();
+            if(isCur){ctx.strokeStyle='#111827';ctx.lineWidth=2;ctx.stroke();}
+        }
+        ctx.globalAlpha=1;
+        // Real coord marker
+        if(d&&d.coord){
+            var rc=d.coord,mx=cw-200,my=cy-120;
+            ctx.fillStyle='rgba(255,255,255,.9)';ctx.strokeStyle='#c0c0c8';ctx.lineWidth=1;
+            ctx.beginPath();ctx.roundRect(mx,my,180,60,8);ctx.fill();ctx.stroke();
+            ctx.fillStyle='#ec4899';ctx.font='bold 13px "JetBrains Mono",monospace';ctx.textAlign='center';
+            ctx.fillText('\u5F53\u524D\u5750\u6807',mx+90,my+20);
+            ctx.font='12px "JetBrains Mono",monospace';ctx.fillStyle='#06b6d4';
+            ctx.fillText('('+rc.join(',')+')',mx+90,my+42);
+        }
+        // 17x17 Patch
+        var pX=cw-220,pY=ch-220,pCell=10,pR=8;
+        ctx.fillStyle='rgba(255,255,255,.92)';ctx.strokeStyle='#c0c0c8';ctx.lineWidth=1;
+        ctx.beginPath();ctx.roundRect(pX-10,pY-30,pCell*17+20,pCell*17+40,8);ctx.fill();ctx.stroke();
+        ctx.fillStyle='#374151';ctx.font='10px "Inter",sans-serif';ctx.textAlign='left';
+        ctx.fillText('17\u00D717 Causal Patch (profile-trace)',pX,pY-14);
+        for(var r=0;r<17;r++)for(var c=0;c<17;c++){
+            var dx=c-8,dy=r-8,dist=Math.sqrt(dx*dx+dy*dy);
+            var isCP=(dx<0)||(dx===0&&dy<0)||(dx>0&&dy<-dx),isCtr=(r===8&&c===8);
+            var cx2=pX+c*pCell,cy2=pY+r*pCell;
+            if(isCtr){ctx.fillStyle='#ec4899';ctx.shadowColor='#ec4899';ctx.shadowBlur=10;}
+            else if(isCP){ctx.fillStyle='rgba(6,182,212,'+(.35+(1-dist/12)*.5)+')';ctx.shadowBlur=0;}
+            else{ctx.fillStyle='#e2e4e8';ctx.shadowBlur=0;}
+            ctx.fillRect(cx2,cy2,pCell-1,pCell-1);ctx.shadowBlur=0;
+        }
+        var lY=pY+pCell*17+16;
+        ctx.fillStyle='#06b6d4';ctx.fillRect(pX,lY,10,10);
+        ctx.fillStyle='#374151';ctx.font='10px "Inter",sans-serif';ctx.textAlign='left';
+        ctx.fillText('Causal \u5DF2\u7F16\u7801',pX+16,lY+9);
+        ctx.fillStyle='#ec4899';ctx.fillRect(pX+110,lY,10,10);
+        ctx.fillText('Current \u5F53\u524D\u70B9',pX+126,lY+9);
+    }
+
+    // ===== RENDER STEP 3: CNN =====
+    function _vstep3(t){t=Math.max(0,Math.min(1,t));var c;if(t<0.25){var s=t/0.25;c=[Math.round(68+s*1),Math.round(1+127*s),Math.round(84+89*s)];}else if(t<0.5){var s=(t-0.25)/0.25;c=[69,Math.round(128+63*s),Math.round(173-35*s)];}else if(t<0.75){var s=(t-0.5)/0.25;c=[Math.round(69+121*s),Math.round(191+32*s),Math.round(138-55*s)];}else{var s=(t-0.75)/0.25;c=[Math.round(190+63*s),Math.round(223+8*s),Math.round(83-46*s)];}return 'rgb('+c[0]+','+c[1]+','+c[2]+')';}
+    function renderStep3(){
+        var d=State.apiData.predict;
+        ctx.clearRect(0,0,cw,ch);
+        if(!d||!d.probabilities||d.probabilities.length===0){drawMsg('\u8BF7\u5148\u52A0\u8F7D SEG-Y \u6587\u4EF6');return;}
+        var probs=d.probabilities,actual=d.actual_symbol,cx=cw/2,cy=ch/2+20;
+        var chartW=Math.min(700,cw-180),chartH=240,bW=chartW/256;
+        ctx.font='12px "Inter",sans-serif';ctx.fillStyle='#374151';ctx.textAlign='center';
+        ctx.fillText('Stage4 CNN \u8F93\u51FA: 256-class \u771F\u5B9E\u6982\u7387\u5206\u5E03 (\u5E42\u653E\u5927)',cx,cy-chartH/2-30);
+        ctx.strokeStyle='#c0c0c8';ctx.beginPath();ctx.moveTo(cx-chartW/2,cy+chartH/2);ctx.lineTo(cx+chartW/2,cy+chartH/2);ctx.stroke();
+        var maxP=Math.max.apply(null,probs),barMax=chartH/2-8;
+        // Power-law scale to amplify small values
+        var powExp=0.35;
+        for(var i=0;i<256;i++){
+            var scaled=Math.pow(Math.max(probs[i]/maxP,1e-6),powExp);
+            var bh=scaled*barMax,x=cx-chartW/2+i*bW,y=cy+chartH/2-bh;
+            // Color: viridis-like gradient based on probability
+            var colT=Math.pow(Math.max(probs[i]/maxP,1e-6),0.3);
+            ctx.fillStyle=_vstep3(colT);
+            ctx.fillRect(x,y,bW-.5,Math.max(bh,1.5));
+            if(i===actual){ctx.strokeStyle='#ec4899';ctx.lineWidth=2;ctx.strokeRect(x-1,y-2,bW+1,Math.max(bh,1.5)+2);}
+        }
+        ctx.fillStyle='#6b7280';ctx.font='10px "JetBrains Mono",monospace';
+        for(i=0;i<=256;i+=64)ctx.fillText(i,cx-chartW/2+i*bW,cy+chartH/2+16);
+        ctx.fillText('Symbol (0-255)',cx,cy+chartH/2+32);
+        // Info box
+        var iX=cx+chartW/2+20,iY=cy-50;
+        ctx.fillStyle='rgba(255,255,255,.95)';ctx.strokeStyle='#c0c0c8';
+        ctx.beginPath();ctx.roundRect(iX,iY,150,110,8);ctx.fill();ctx.stroke();
+        ctx.textAlign='left';ctx.font='10px "Inter",sans-serif';ctx.fillStyle='#374151';
+        ctx.fillText('\u771F\u5B9E Symbol:',iX+12,iY+20);
+        ctx.font='bold 17px "JetBrains Mono",monospace';ctx.fillStyle='#ec4899';ctx.fillText(actual,iX+12,iY+42);
+        ctx.font='10px "Inter",sans-serif';ctx.fillStyle='#374151';ctx.fillText('\u6982\u7387:',iX+12,iY+60);
+        ctx.font='bold 13px "JetBrains Mono",monospace';ctx.fillStyle='#06b6d4';ctx.fillText((probs[actual]*100).toFixed(2)+'%',iX+12,iY+78);
+        ctx.font='9px "Inter",sans-serif';ctx.fillStyle='#6b7280';ctx.fillText('\u71B5='+(d.entropy||0).toFixed(2)+' bits',iX+12,iY+100);
+        // Top 5 list
+        var top5=d.top5||[]; if(top5.length>0){
+            ctx.fillStyle='#374151';ctx.font='9px Inter';ctx.textAlign='left';
+            ctx.fillText('Top5:',iX+12,iY+118);
+            for(var k=0;k<Math.min(5,top5.length);k++){
+                var ti=top5[k]; ctx.fillStyle=ti.symbol===actual?'#ec4899':'#6b7280';
+                ctx.fillText(ti.symbol+' ('+(ti.prob*100).toFixed(1)+'%)',iX+16+((k%2)*70),iY+132+Math.floor(k/2)*14);
+            }
+        }
+        // CNN arch
+        var aX=cx-chartW/2-135,aY=cy-55;
+        ctx.fillStyle='rgba(255,255,255,.95)';ctx.strokeStyle='#c0c0c8';
+        ctx.beginPath();ctx.roundRect(aX,aY,110,130,8);ctx.fill();ctx.stroke();
+        ctx.textAlign='center';ctx.fillStyle='#374151';ctx.font='10px "Inter",sans-serif';
+        ctx.fillText('Small2DCNN',aX+55,aY+16);
+        var lyrs=[{h:36,c:'#06b6d4',l:'Conv2D'},{h:28,c:'#0891b2',l:'ReLU'},{h:24,c:'#0e7490',l:'Conv2D'},{h:20,c:'#155e75',l:'FC 256'}];
+        var ly=aY+28;
+        lyrs.forEach(function(lr){
+            ctx.fillStyle=lr.c;ctx.fillRect(aX+18,ly,74,lr.h);
+            ctx.fillStyle='#fff';ctx.font='9px "Inter",sans-serif';ctx.fillText(lr.l,aX+55,ly+lr.h/2+3);
+            ly+=lr.h+4;
+        });
+        ctx.strokeStyle='#9ca3af';ctx.setLineDash([4,4]);ctx.beginPath();
+        ctx.moveTo(aX+110,cy);ctx.lineTo(cx-chartW/2,cy);ctx.stroke();ctx.setLineDash([]);
+        ctx.fillText('17\u00D717 Patch',aX+55,aY-6);
+    }
+
+    // ===== RENDER STEP 4: RANGE CODING =====
+    function renderStep4(){
+        var d=State.apiData.predict,e=State.apiData.encode;
+        ctx.clearRect(0,0,cw,ch);
+        if(!d||!d.probabilities||d.probabilities.length===0){drawMsg('\u8BF7\u5148\u8FD0\u884C CNN \u9884\u6D4B');return;}
+        var probs=d.probabilities,sym=e?e.symbol:(d.actual_symbol||0),cx=cw/2,cy=ch/2;
+        var barW=Math.min(600,cw-100),barH=36,startY=cy-90;
+        ctx.font='12px "Inter",sans-serif';ctx.fillStyle='#374151';ctx.textAlign='center';
+        ctx.fillText('Arithmetic / Range Coding \u2014 \u771F\u5B9E\u7F16\u7801',cx,startY-20);
+        // Main probability bar
+        ctx.fillStyle='#e2e4e8';ctx.fillRect(cx-barW/2,startY,barW,barH);
+        var cumX=cx-barW/2;
+        for(var i=0;i<256;i++){
+            var w=probs[i]*barW;
+            ctx.fillStyle=i===sym?'#ec4899':'hsla('+((i/256)*360)+',70%,50%,.3)';
+            ctx.fillRect(cumX,startY,w,barH);cumX+=w;
+        }
+        ctx.strokeStyle='#9ca3af';ctx.lineWidth=2;ctx.strokeRect(cx-barW/2,startY,barW,barH);
+        ctx.fillStyle='#6b7280';ctx.font='11px "JetBrains Mono",monospace';
+        ctx.fillText('0.0',cx-barW/2,startY+barH+18);ctx.fillText('1.0',cx+barW/2,startY+barH+18);
+        // Symbol highlight
+        var cdf=[],cum=0;for(i=0;i<256;i++){cum+=probs[i];cdf.push(cum);}
+        var sS=cx-barW/2+(cdf[sym]-probs[sym])*barW,sW=probs[sym]*barW;
+        ctx.strokeStyle='#ec4899';ctx.lineWidth=3;ctx.beginPath();
+        ctx.moveTo(sS+sW/2,startY-10);ctx.lineTo(sS+sW/2,startY);ctx.stroke();
+        ctx.fillStyle='#ec4899';ctx.font='bold 12px "Inter",sans-serif';ctx.textAlign='center';
+        ctx.fillText('Symbol '+sym,sS+sW/2,startY-16);
+        // Zoom view
+        var zY=startY+70,zW=barW*.8,zH=55;
+        ctx.fillStyle='rgba(255,255,255,.9)';ctx.strokeStyle='#c0c0c8';
+        ctx.beginPath();ctx.roundRect(cx-zW/2,zY,zW,zH,8);ctx.fill();ctx.stroke();
+        ctx.fillStyle='#374151';ctx.font='10px "Inter",sans-serif';ctx.fillText('\u653E\u5927\u89C6\u56FE: \u5F53\u524D\u533A\u95F4\u7F29\u7A84\u8FC7\u7A0B',cx,zY-8);
+        var lR=probs[sym],lx=cx-zW/2;
+        for(i=0;i<256;i++){var lw=(probs[i]/lR)*zW*.08;if(lw<1)continue;ctx.fillStyle=i===sym?'#ec4899':'hsla('+((i/256)*360)+',70%,50%,.4)';ctx.fillRect(lx,zY+12,lw,zH-24);lx+=lw;}
+        // Bitstream
+        var bY=zY+zH+40,bitSize=22,bitCount=16,bStart=cx-bitCount*bitSize/2;
+        ctx.fillStyle='#374151';ctx.font='11px "Inter",sans-serif';ctx.fillText('\u8F93\u51FA\u6BD4\u7279\u6D41:',cx,bY-4);
+        for(i=0;i<bitCount;i++){
+            var bitVal=(sym>>(i%8))&1,x=bStart+i*bitSize;
+            ctx.fillStyle=bitVal?'#10b981':'#e2e4e8';ctx.strokeStyle='#9ca3af';ctx.lineWidth=1;
+            ctx.beginPath();ctx.roundRect(x,bY+4,bitSize-2,bitSize,3);ctx.fill();ctx.stroke();
+            ctx.fillStyle=bitVal?'#fff':'#6b7280';ctx.font='bold 11px "JetBrains Mono",monospace';ctx.textAlign='center';
+            ctx.fillText(bitVal,x+bitSize/2-1,bY+20);
+        }
+        // Encode info
+        if(e){
+            var ey=bY+50;
+            ctx.font='11px "Inter",sans-serif';ctx.fillStyle='#10b981';ctx.textAlign='center';
+            ctx.fillText('Range: ['+e.range_low.toFixed(4)+', '+e.range_high.toFixed(4)+')    Prob: '+(e.prob*100).toFixed(2)+'%    Bits: '+e.bits_output, cx, ey);
+            ctx.fillText('\u5DF2\u7F16\u7801: '+e.encoded_count+'/'+e.total_coords, cx, ey+18);
+        }
+        // Formula
+        ctx.font='11px "JetBrains Mono",monospace';ctx.fillStyle='#6b7280';ctx.textAlign='center';
+        var fy=bY+80;(e)||(fy=bY+45);
+        ctx.fillText('low += range \u00D7 cdf[symbol]    range = range \u00D7 prob[symbol]',cx,fy);
+    }
+
+    function drawMsg(msg){
+        ctx.clearRect(0,0,cw,ch);
+        ctx.font='16px "Inter","Segoe UI",sans-serif';ctx.fillStyle='#6b7280';ctx.textAlign='center';
+        ctx.fillText(msg||'\u8BF7\u5148\u52A0\u8F7D SEG-Y \u6587\u4EF6',cw/2,ch/2-10);
+        ctx.font='12px "Inter",sans-serif';ctx.fillStyle='#9ca3af';
+        ctx.fillText('\u70B9\u51FB\u5DE6\u4FA7\u201C\u52A0\u8F7D SEG-Y \u6587\u4EF6\u201D\u6309\u94AE',cw/2,ch/2+18);
+    }
+
+    // ===== NAVIGATION =====
+    function renderStep(){
+        switch(State.step){case 0:renderStep1();break;case 1:renderStep2();break;case 2:renderStep3();break;case 3:renderStep4();break;}
+    }
+
+    async function gotoStep(idx){
+        if(idx<0||idx>3)return;
+        State.step=idx;
+        document.querySelectorAll('.step-tab').forEach(function(t,i){t.classList.toggle('active',i===idx);});
+        updateInfo(idx);
+        await fetchData(idx);
+        updateMetrics();
+        updateCoord();
+        renderStep();
+    }
+
+    function startPlay(){
+        if(!State.taskId||State.playing)return;
+        State.playing=true;document.getElementById('statusBadge').className='status-badge status-running';document.getElementById('statusBadge').textContent='\u64AD\u653E\u4E2D';
+        State.interval=setInterval(function(){
+            State.sampleIdx=(State.sampleIdx+1)%State.sampleCount;
+            document.getElementById('sampleSlider').value=State.sampleIdx;
+            document.getElementById('sampleVal').textContent=State.sampleIdx;
+            gotoStep(State.step);
+        },Math.max(150,550-State.speed*50));
+    }
+    function stopPlay(){
+        State.playing=false;clearInterval(State.interval);
+        document.getElementById('statusBadge').className='status-badge status-paused';document.getElementById('statusBadge').textContent='\u5DF2\u6682\u505C';
+    }
+
+    document.addEventListener('DOMContentLoaded',function(){setTimeout(init,200);});
+    })();
+    </script>
+</body>
+</html>

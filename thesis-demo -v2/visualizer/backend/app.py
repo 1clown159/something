@@ -196,6 +196,7 @@ async def decompress_uploaded_file(
     file: UploadFile = File(...),
     sign_file: Optional[UploadFile] = None,
     mant_file: Optional[UploadFile] = None,
+    headers_file: Optional[UploadFile] = None,
     output_format: str = "bin",
     background_tasks: BackgroundTasks = None,
 ):
@@ -225,18 +226,35 @@ async def decompress_uploaded_file(
             "bitstream_path": str(s4rc_path),
         }
         
+        total_upload_size = os.path.getsize(s4rc_path)
+        
         if sign_file:
             sign_path = task_dir / "sign.zlib"
             with open(sign_path, "wb") as f:
                 shutil.copyfileobj(sign_file.file, f)
             task_info["sign_path"] = str(sign_path)
+            sign_size = os.path.getsize(sign_path)
+            total_upload_size += sign_size
+            task_info["sign_size"] = sign_size
         
         if mant_file:
             mant_path = task_dir / "mant.zlib"
             with open(mant_path, "wb") as f:
                 shutil.copyfileobj(mant_file.file, f)
             task_info["mant_path"] = str(mant_path)
+            mant_size = os.path.getsize(mant_path)
+            total_upload_size += mant_size
+            task_info["mant_size"] = mant_size
         
+        if headers_file:
+            headers_path = task_dir / "sgy_headers.json"
+            with open(headers_path, "wb") as f:
+                shutil.copyfileobj(headers_file.file, f)
+            task_info["sgy_headers_path"] = str(headers_path)
+            task_info["has_headers"] = True
+        
+        task_info["file_size"] = total_upload_size
+        task_info["s4rc_size"] = os.path.getsize(s4rc_path)
         task_info["status"] = "decompressing"
         task_info["progress"] = 0
         task_info["operation"] = "decompress"
@@ -542,6 +560,15 @@ def run_compression_with_progress(task_id: str, config: CompressConfig):
         
         print(f"[INFO] Compression complete: {original_size/1024/1024:.1f}MB -> {total_compressed/1024/1024:.1f}MB ({result['compression_ratio']:.2f}x)")
 
+        # 复制 SGY 头文件到 output 目录，供后续独立解压重建 SGY
+        if is_sgy and task.get("sgy_headers_path"):
+            import shutil as _shutil
+            hdr_src = task["sgy_headers_path"]
+            hdr_dst = os.path.join(output_dir, "sgy_headers.json")
+            if os.path.exists(hdr_src):
+                _shutil.copy2(hdr_src, hdr_dst)
+                print(f"[INFO] SGY headers copied to output: {hdr_dst}")
+
         # 先生成演示用的中间数据 trace，再标记完成，避免前端查到 completed 时缓存还未就绪
         print(f"[INFO] Starting demo trace generation for task {task_id}...")
         try:
@@ -699,6 +726,7 @@ def run_standalone_decompression(task_id: str):
         
         sign_path = task.get("sign_path")
         mant_path = task.get("mant_path")
+        headers_path = task.get("sgy_headers_path")
         
         if sign_path and mant_path and os.path.exists(sign_path) and os.path.exists(mant_path):
             total = int(np.prod(shape))
@@ -723,15 +751,50 @@ def run_standalone_decompression(task_id: str):
                    | (mants.astype(np.uint32) & 0x7FFFFF))
             float32_data = u32.view(np.float32)
             
-            output_path = os.path.join(output_dir, task["output_filename"])
-            float32_data.tofile(output_path)
+            # 有 headers 时重建 SGY，否则输出裸 .bin
+            use_headers = headers_path and os.path.exists(headers_path)
+            if use_headers:
+                import json as _json
+                import base64 as _b64
+                try:
+                    with open(headers_path, "r", encoding="utf-8") as _hf:
+                        hdr = _json.load(_hf)
+                    sgy_headers = {
+                        "text_header": _b64.b64decode(hdr["text_header"]),
+                        "binary_header": _b64.b64decode(hdr["binary_header"]),
+                        "trace_headers": [_b64.b64decode(h) for h in hdr["trace_headers"]],
+                        "meta": hdr["meta"],
+                    }
+                    shape_3d = float32_data.shape
+                    if len(shape_3d) == 3:
+                        float32_2d = float32_data.reshape(
+                            sgy_headers["meta"]["trace_count"],
+                            sgy_headers["meta"]["sample_count"])
+                    else:
+                        float32_2d = float32_data.reshape(-1, sgy_headers["meta"]["sample_count"])
+                    output_filename = Path(task["output_filename"]).stem + ".sgy"
+                    output_path = os.path.join(output_dir, output_filename)
+                    from core.sgy_extractor import reconstruct_sgy
+                    reconstruct_sgy(sgy_headers, float32_2d, output_path)
+                    task["output_filename"] = output_filename
+                    task["reconstructed_sgy"] = True
+                    print(f"[INFO] SGY reconstructed with headers: {output_path}")
+                except Exception as e:
+                    print(f"[WARN] SGY reconstruction failed, falling back to .bin: {e}")
+                    output_path = os.path.join(output_dir, task["output_filename"])
+                    float32_data.tofile(output_path)
+            else:
+                output_path = os.path.join(output_dir, task["output_filename"])
+                float32_data.tofile(output_path)
         else:
             output_path = os.path.join(output_dir, task["output_filename"])
             shutil.copy(exponent_output, output_path)
         
         task["decompressed_path"] = output_path
         task["decompressed_size"] = os.path.getsize(output_path)
-        task["file_size"] = os.path.getsize(bitstream_path)
+        # 保留上传阶段计算的总大小，不要覆盖
+        task["s4rc_size"] = os.path.getsize(bitstream_path)
+        task["original_data_size"] = int(np.prod(shape)) * 4
         task["has_aux_files"] = bool(sign_path and mant_path)
         task["status"] = "decompress_completed"
         task["progress"] = 100
@@ -866,309 +929,6 @@ async def sgy_heatmap_slice(
         "vmax": vmax,
         "original_shape": [traces_per_profile, sample_count],
         "downsampled": (trace_step > 1 or sample_step > 1),
-    }
-
-# ====================== Demo APIs ======================
-
-class DecomposeRequest(BaseModel):
-    values: Optional[List[float]] = None
-    file_path: Optional[str] = None
-    coord: Optional[List[int]] = None
-    task_id: Optional[str] = None
-
-@app.post("/api/demo/decompose")
-async def demo_decompose(req: DecomposeRequest):
-    """Float32 位拆解 — 优先从缓存 demo trace 读取，否则从文件坐标读取"""
-    try:
-        coord = tuple(req.coord) if req.coord else None
-        print(f"[API] /api/demo/decompose task_id={req.task_id} coord={coord} file_path={req.file_path}")
-
-        # 1) 优先从 demo trace 缓存读取（压缩后预计算的真实中间数据）
-        if req.task_id and req.task_id in tasks:
-            has_trace = "demo_trace" in tasks[req.task_id]
-            print(f"[API] task found, demo_trace exists={has_trace}")
-            if has_trace:
-                trace = tasks[req.task_id]["demo_trace"]
-                if coord and coord in trace:
-                    print(f"[API] decompose CACHE HIT for {coord}")
-                    return {"decomposed": [trace[coord]]}
-                else:
-                    print(f"[API] decompose cache miss: coord {coord} not in trace (keys={list(trace.keys())[:3]}...)")
-        else:
-            print(f"[API] task not found or no task_id provided")
-
-        # 2) 从文件坐标读取
-        print(f"[API] decompose falling back to file read: {req.file_path}")
-        if req.file_path and req.coord:
-            shape_tuple = _infer_demo_shape(req.file_path)
-            vol = np.memmap(req.file_path, dtype=np.float32, mode='r').reshape(shape_tuple)
-            p, t, s = req.coord[0], req.coord[1], req.coord[2]
-            if 0 <= p < shape_tuple[0] and 0 <= t < shape_tuple[1] and 0 <= s < shape_tuple[2]:
-                v = float(vol[p, t, s])
-            else:
-                v = 0.0
-            values = [v]
-        elif req.values:
-            values = list(req.values)
-        else:
-            raise HTTPException(status_code=400, detail="提供 values 或 file_path+coord")
-
-        data = np.array(values, dtype=np.float32)
-        u32 = data.view(np.uint32)
-        signs = ((u32 >> 31) & 0x1).astype(np.uint8)
-        exps = ((u32 >> 23) & 0xFF).astype(np.uint8)
-        mants = (u32 & 0x7FFFFF).astype(np.uint32)
-
-        results = []
-        for i, v in enumerate(values):
-            results.append({
-                "original": float(v),
-                "sign": int(signs[i]),
-                "exp_raw": int(exps[i]),
-                "exp_value": int(exps[i]) - 127,
-                "mant": int(mants[i]),
-                "binary": f"{signs[i]}|{format(int(exps[i]), '08b')}|{format(int(mants[i]), '023b')}"
-            })
-        return {"decomposed": results}
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-def _infer_demo_shape(file_path: str):
-    """推断 demo 数据文件的三维形状"""
-    num = os.path.getsize(file_path) // 4
-    # Try to load from .shape sidecar
-    sp = file_path + '.shape'
-    if os.path.exists(sp):
-        import json as _j
-        with open(sp) as f: return tuple(_j.load(f))
-    # Fallback heuristics
-    for s in [2001, 1500, 1000, 500]:
-        if num % s == 0:
-            mid = num // s
-            for t in range(100, 2000):
-                if mid % t == 0:
-                    p = mid // t
-                    if 1 <= p <= 2000:
-                        return (p, t, s)
-    return (1, num, 1)
-
-
-# ====================== SEG-Y Load for Demo ======================
-
-@app.post("/api/demo/load-sgy")
-async def demo_load_sgy(file: UploadFile = File(...), background_tasks: BackgroundTasks = None):
-    """上传 SEG-Y 文件 → 提取 float32 → 后台压缩 → 返回 task_id 和形状"""
-    import base64
-    import json as json_module
-    import zlib
-
-    task_id = str(uuid.uuid4())[:8]
-    task_dir = UPLOAD_DIR / task_id
-    task_dir.mkdir(exist_ok=True)
-    output_dir = str(OUTPUT_DIR / task_id)
-    os.makedirs(output_dir, exist_ok=True)
-
-    # Save uploaded SEG-Y
-    sgy_path = task_dir / file.filename
-    with open(sgy_path, "wb") as f:
-        shutil.copyfileobj(file.file, f)
-
-    # Extract headers and float32
-    print(f"[INFO] Demo SEG-Y extraction: {file.filename}")
-    sgy_headers = extract_sgy_headers(str(sgy_path))
-    sgy_meta = sgy_headers["meta"]
-
-    headers_serializable = {
-        "text_header": base64.b64encode(sgy_headers["text_header"]).decode("ascii"),
-        "binary_header": base64.b64encode(sgy_headers["binary_header"]).decode("ascii"),
-        "trace_headers": [base64.b64encode(h).decode("ascii") for h in sgy_headers["trace_headers"]],
-        "meta": sgy_meta,
-    }
-    sgy_headers_path = task_dir / "sgy_headers.json"
-    with open(sgy_headers_path, "w", encoding="utf-8") as f:
-        json_module.dump(headers_serializable, f, ensure_ascii=False, default=str)
-
-    float32_2d = extract_sgy_float32(str(sgy_path), meta=sgy_meta, dtype=np.float32)
-    profile_count = sgy_meta.get("profile_count") or 1
-    traces_per_profile = sgy_meta.get("traces_per_profile") or sgy_meta["trace_count"]
-    if profile_count * traces_per_profile == sgy_meta["trace_count"]:
-        float32_3d = float32_2d.reshape(profile_count, traces_per_profile, sgy_meta["sample_count"])
-    else:
-        float32_3d = float32_2d.reshape(1, sgy_meta["trace_count"], sgy_meta["sample_count"])
-        sgy_meta["profile_count"] = 1; sgy_meta["traces_per_profile"] = sgy_meta["trace_count"]
-
-    dat_path = str(task_dir / (sgy_path.stem + ".dat"))
-    float32_3d.tofile(dat_path)
-    shape = list(float32_3d.shape)
-    shape_path = dat_path + ".shape"
-    with open(shape_path, "w") as f:
-        json_module.dump(shape, f)
-
-    print(f"[INFO] Demo extraction done: shape={shape}, {os.path.getsize(dat_path)/1024/1024:.1f}MB")
-
-    # Build task and start background compression
-    task_info = {
-        "id": task_id, "status": "extracting", "filename": file.filename,
-        "file_path": str(sgy_path), "compress_path": dat_path,
-        "sgy_meta": sgy_meta, "float32_shape": shape, "is_sgy": True,
-        "sgy_headers_path": str(sgy_headers_path),
-        "original_sgy_path": str(sgy_path),
-        "progress": 0, "created_at": datetime.now().isoformat(),
-        "demo_source": True,
-    }
-
-    # Sign/mant extraction (like in run_compression_with_progress)
-    volume = np.memmap(dat_path, dtype=np.float32, mode='r')
-    u32 = volume.view(np.uint32)
-    signs = ((u32 >> 31) & 0x1).astype(np.uint8)
-    mants = (u32 & 0x7FFFFF).astype(np.uint32)
-    volume._mmap.close()
-
-    packed_signs = np.packbits(signs.reshape(-1))
-    sign_path = os.path.join(output_dir, "sign.zlib")
-    with open(sign_path, 'wb') as f:
-        f.write(zlib.compress(packed_signs.tobytes(), level=1))
-    mant_bytes = np.zeros((mants.size, 3), dtype=np.uint8)
-    mant_bytes[:, 0] = (mants & 0xFF).astype(np.uint8)
-    mant_bytes[:, 1] = ((mants >> 8) & 0xFF).astype(np.uint8)
-    mant_bytes[:, 2] = ((mants >> 16) & 0xFF).astype(np.uint8)
-    mant_path = os.path.join(output_dir, "mant.zlib")
-    with open(mant_path, 'wb') as f:
-        f.write(zlib.compress(mant_bytes.tobytes(), level=1))
-    task_info["sign_path"] = sign_path
-    task_info["mant_path"] = mant_path
-
-    tasks[task_id] = task_info
-
-    # Background: run CNN compression
-    config = CompressConfig(feature_mode="diagonal_causal_edge", target_mode="residual",
-                            patch_shape=[9, 17], inference_batch=DEFAULT_INFERENCE_BATCH, device=DEFAULT_DEVICE)
-    task_info["config"] = config.model_dump()
-    task_info["status"] = "compressing"
-    background_tasks.add_task(run_compression_with_progress, task_id, config)
-
-    return {
-        "task_id": task_id,
-        "filename": file.filename,
-        "shape": shape,
-        "dat_path": dat_path,
-        "file_size_mb": round(os.path.getsize(sgy_path) / 1024 / 1024, 1),
-        "status": "compressing"
-    }
-
-
-@app.get("/api/demo/stats/{task_id}")
-async def demo_stats(task_id: str):
-    """获取演示任务的压缩统计"""
-    if task_id not in tasks:
-        raise HTTPException(status_code=404, detail="Task not found")
-    t = tasks[task_id]
-    output = t.get("output", {})
-    return {
-        "task_id": task_id,
-        "status": t.get("status", "unknown"),
-        "progress": t.get("progress", 0),
-        "demo_ready": t.get("demo_ready", False),
-        "shape": t.get("float32_shape", []),
-        "filename": t.get("filename", ""),
-        "dat_path": t.get("compress_path", t.get("file_path", "")),
-        "original_size": output.get("original_size", 0),
-        "compressed_size": output.get("total_compressed_bytes", output.get("compressed_size", 0)),
-        "exponent_bytes": output.get("exponent_bytes", 0),
-        "sign_bytes": output.get("sign_bytes", 0),
-        "mant_bytes": output.get("mant_bytes", 0),
-        "compression_ratio": output.get("total_compression_ratio", output.get("compression_ratio", 0)),
-        "bits_per_voxel": output.get("bits_per_voxel", 0),
-    }
-
-
-class PredictRequest(BaseModel):
-    task_id: Optional[str] = None
-    coord: List[int] = [0, 100, 1000]
-    feature_mode: str = "diagonal_causal_edge"
-    target_mode: str = "residual"
-    patch_shape: List[int] = [9, 17]
-    file_path: Optional[str] = None
-
-@app.post("/api/demo/predict")
-async def demo_predict(req: PredictRequest):
-    """CNN 概率预测 — 优先从缓存 demo trace 读取，无缓存时尝试实时预测，最后 fallback mock"""
-    coord = tuple(req.coord)
-    print(f"[API] /api/demo/predict task_id={req.task_id} coord={coord}")
-
-    # 1) 优先从 demo trace 缓存读取（压缩后预计算的真实中间数据）
-    if req.task_id and req.task_id in tasks:
-        has_trace = "demo_trace" in tasks[req.task_id]
-        print(f"[API] predict task found, demo_trace exists={has_trace}")
-        if has_trace:
-            trace = tasks[req.task_id]["demo_trace"]
-            if coord in trace:
-                print(f"[API] predict CACHE HIT for {coord}")
-                result = dict(trace[coord])
-                result["mock"] = False
-                return result
-            else:
-                print(f"[API] predict cache miss: coord {coord} not in trace")
-    else:
-        print(f"[API] predict task not found or no task_id")
-
-    # 2) 尝试实时预测（加载模型，较慢）
-    print(f"[API] predict falling back to real-time inference")
-    try:
-        from core.stage4_bridge import predict_probabilities
-
-        file_path = req.file_path
-        if not file_path and req.task_id and req.task_id in tasks:
-            file_path = tasks[req.task_id].get("compress_path") or tasks[req.task_id].get("file_path")
-
-        if file_path and os.path.exists(file_path):
-            checkpoint_candidates = list(ALGORITHM_DIR.rglob("*/checkpoint.pt"))
-            if checkpoint_candidates:
-                cp = str(checkpoint_candidates[0])
-                print(f"[INFO] Demo predict using checkpoint: {cp}")
-                result = predict_probabilities(
-                    file_path=file_path,
-                    coord=tuple(req.coord),
-                    checkpoint_path=cp,
-                    patch_shape=tuple(req.patch_shape),
-                    feature_mode=req.feature_mode,
-                    target_mode=req.target_mode,
-                    device=DEFAULT_DEVICE
-                )
-                if "error" not in result:
-                    result["mock"] = False
-                    print(f"[API] predict real-time inference success")
-                    return result
-                else:
-                    print(f"[API] predict real-time inference returned error: {result.get('error')}")
-        else:
-            print(f"[API] predict no file_path available")
-    except Exception as e:
-        print(f"[WARN] Real predict failed, falling back to mock: {e}")
-
-    # Fallback: high-quality mock
-    import math
-    center = req.coord[2] % 256  # deterministic from coord
-    probs = np.zeros(256, dtype=np.float32)
-    for i in range(256):
-        dist = abs(i - center)
-        probs[i] = math.exp(-dist * dist / (2 * 15 * 15)) + np.random.random() * 0.02
-    probs = probs / probs.sum()
-    entropy = -np.sum(probs * np.log2(probs + 1e-10))
-    top5_idx = np.argsort(probs)[-5:][::-1]
-    top5 = [{"symbol": int(i), "prob": float(probs[i])} for i in top5_idx]
-
-    return {
-        "mock": True,
-        "coord": req.coord,
-        "probabilities": probs.tolist(),
-        "predicted_symbol": int(np.argmax(probs)),
-        "actual_symbol": center,
-        "entropy": float(entropy),
-        "top5": top5
     }
 
 
@@ -1514,6 +1274,148 @@ async def demo_stats(task_id: str):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ====================== Local Bit Stats ======================
+
+@app.get("/api/sgy/local-bit-stats")
+async def sgy_local_bit_stats(
+    file_path: str = Query(...),
+    inline_idx: int = Query(0),
+    trace_start: int = Query(0),
+    trace_end: int = Query(20),
+    sample_start: int = Query(0),
+    sample_end: int = Query(20),
+    max_cols: int = Query(20),
+    max_rows: int = Query(20),
+):
+    """返回指定剖面的局部区域原始数据和位统计"""
+    import struct, math
+
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="文件不存在")
+
+    try:
+        meta = _get_sgy_meta(file_path)
+    except:
+        raise HTTPException(status_code=500, detail="解析失败")
+
+    profile_count = meta.get("profile_count")
+    traces_per = meta.get("traces_per_profile")
+    sample_count = meta.get("sample_count")
+    format_code = meta.get("format_code", 5)
+    trace_total = meta.get("trace_total_bytes", 0)
+    bps = meta.get("bytes_per_sample", 4)
+
+    if not all([profile_count, traces_per, sample_count, trace_total]):
+        raise HTTPException(status_code=500, detail="元数据不完整")
+    if inline_idx < 0 or inline_idx >= profile_count:
+        raise HTTPException(status_code=400, detail=f"inline_idx 超出范围")
+
+    # Clamp ranges
+    t_start = max(0, trace_start)
+    t_end = min(traces_per, trace_end)
+    s_start = max(0, sample_start)
+    s_end = min(sample_count, sample_end)
+
+    t_count = t_end - t_start
+    s_count = s_end - s_start
+    if t_count <= 0 or s_count <= 0:
+        raise HTTPException(status_code=400, detail="区域无效")
+
+    def _ibm_to_ieee(raw4):
+        bits = int.from_bytes(raw4, 'big')
+        sign = -1 if (bits >> 31) & 1 else 1
+        exp = (bits >> 24) & 0x7F
+        mant = bits & 0x00FFFFFF
+        if exp == 0 and mant == 0: return 0.0
+        return sign * (mant / (1 << 24)) * (16.0 ** (exp - 64))
+
+    offset = 3600 + inline_idx * traces_per * trace_total
+
+    # Read raw values
+    raw_vals = []
+    with open(file_path, 'rb') as f:
+        for t in range(t_start, t_end):
+            f.seek(offset + t * trace_total + 240)
+            raw = f.read(sample_count * bps)
+            row = []
+            for s in range(s_start, s_end):
+                pos = s * bps
+                if format_code == 1:
+                    v = _ibm_to_ieee(raw[pos:pos+4])
+                elif format_code in (5,):
+                    v = struct.unpack('>f', raw[pos:pos+4])[0]
+                else:
+                    v = float(int.from_bytes(raw[pos:pos+bps], 'big', signed=(format_code==2)))
+                row.append(v)
+            raw_vals.append(row)
+
+    # Convert to numpy for analysis
+    vals = np.array(raw_vals, dtype=np.float32)
+    flat = vals.reshape(-1)
+    u32 = flat.view(np.uint32)
+    signs = (u32 >> 31) & 0x1
+    exps = (u32 >> 23) & 0xFF
+    mants = u32 & 0x7FFFFF
+
+    # Sign stats
+    sign_pos = int(np.sum(signs == 0))
+    sign_neg = int(np.sum(signs == 1))
+    sign_grid = signs.reshape(t_count, s_count).tolist()
+
+    # Exponent histogram (0-255)
+    exp_hist = np.bincount(exps, minlength=256).tolist()
+    exp_grid = exps.reshape(t_count, s_count).tolist()
+
+    # Mantissa stats: per-bit entropy
+    mant_bit_counts = np.zeros(23, dtype=np.int64)
+    for bi in range(23):
+        mant_bit_counts[bi] = int(np.sum((mants >> bi) & 1))
+    mant_total = int(flat.size)
+    mant_per_bit_entropy = []
+    for bi in range(23):
+        ones = int(mant_bit_counts[bi])
+        zeros = mant_total - ones
+        p1 = ones / mant_total if mant_total > 0 else 0
+        p0 = zeros / mant_total if mant_total > 0 else 0
+        e = 0.0
+        if p1 > 0: e -= p1 * math.log2(p1)
+        if p0 > 0: e -= p0 * math.log2(p0)
+        mant_per_bit_entropy.append(round(e, 6))
+
+    # Mantissa high-byte grid (for visualization)
+    mant_grid = (mants >> 16).reshape(t_count, s_count).tolist()
+    # Full mantissa values (uint32) for bit-plane extraction
+    mantissa_full = mants.reshape(t_count, s_count).tolist()
+
+    # Downsample for display
+    t_ds = max(1, t_count // max_cols) if max_cols > 0 else 1
+    s_ds = max(1, s_count // max_rows) if max_rows > 0 else 1
+    vals_ds = vals[::t_ds, ::s_ds].tolist() if t_ds > 1 or s_ds > 1 else raw_vals
+
+    return {
+        "shape": [t_count, s_count],
+        "trace_range": [t_start, t_end],
+        "sample_range": [s_start, s_end],
+        "raw_grid": vals_ds,
+        "sign": {
+            "positive": sign_pos,
+            "negative": sign_neg,
+            "total": int(flat.size),
+            "grid": sign_grid,
+        },
+        "exponent": {
+            "histogram": exp_hist,
+            "grid": exp_grid,
+            "entropy": round(float(-sum((c/int(flat.size))*math.log2(max(c,1)/int(flat.size)) for c in exp_hist if c>0)), 4),
+        },
+        "mantissa": {
+            "per_bit_entropy": mant_per_bit_entropy,
+            "high_byte_grid": mant_grid,
+            "full_grid": mantissa_full,
+        },
+    }
 
 
 if __name__ == "__main__":

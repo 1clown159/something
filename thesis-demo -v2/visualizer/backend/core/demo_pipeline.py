@@ -84,12 +84,35 @@ class SmallVolumeProcessor:
             else:
                 float32_3d = float32_2d.reshape(1, sgy_meta["trace_count"], sgy_meta["sample_count"])
 
-            # 截取前 2 profile, 前 2 trace, 前 N sample
-            p_max = min(2, float32_3d.shape[0])
-            t_max = min(2, float32_3d.shape[1])
+            # 全域分层采样找能量最高的 profile 和 trace
+            p_count = float32_3d.shape[0]
+            t_count = float32_3d.shape[1]
             s_max = min(self.n_samples, float32_3d.shape[2])
 
-            small = float32_3d[:p_max, :t_max, :s_max].copy()
+            best_p, best_t, best_energy = 0, 0, 0.0
+            # 在全域范围内间隔采样，确保覆盖所有区域
+            p_step = max(1, p_count // 30) if p_count > 30 else 1
+            t_step = max(1, t_count // 80) if t_count > 80 else 1
+            for p in range(0, p_count, p_step):
+                for t in range(0, t_count, t_step):
+                    row = float32_3d[p, t, :min(s_max, 200)]
+                    nz = np.count_nonzero(np.abs(row) > 0.001)
+                    energy = float(np.mean(np.abs(row)))
+                    if nz > 2 and energy > best_energy:
+                        best_energy = energy
+                        best_p, best_t = p, t
+
+            print(f"[SmallVolumeProcessor] Best pos: p={best_p} t={best_t} energy={best_energy:.4f} "
+                  f"(scanned p_step={p_step} t_step={t_step})")
+
+            # 从最佳位置截取 2 profile × 2 trace × N samples
+            p_start = best_p
+            t_start = best_t
+            p_end = min(p_start + 2, p_count)
+            t_end = min(t_start + 2, t_count)
+            s_end = min(s_max, float32_3d.shape[2])
+
+            small = float32_3d[p_start:p_end, t_start:t_end, :s_end].copy()
 
             # 如果实际尺寸不足 2×2×N，用零填充
             if small.shape != self.shape:
@@ -223,10 +246,29 @@ class SmallVolumeProcessor:
         return coords
 
     def _probs_to_cdf(self, probs: np.ndarray) -> np.ndarray:
-        """概率分布 → CDF (int32, sum=32768)"""
+        """概率分布 → CDF (int32, sum=32768)，确保严格单调递增"""
         total_freq = 1 << 15  # 32768
+        scaled = probs * total_freq
+        freqs = np.floor(scaled).astype(np.int64)
+        # 分配余量到最大的小数部分，保证总和 = total_freq
+        remainder = int(total_freq - np.sum(freqs))
+        if remainder > 0:
+            fracs = scaled - freqs.astype(np.float64)
+            top_idx = np.argsort(-fracs)[:remainder]
+            for i in top_idx:
+                freqs[i] += 1
+        # 确保每个非零概率的 bin 至少有 1 个计数
+        nonzero = probs > 0
+        zero_mask = (freqs == 0) & nonzero
+        if np.any(zero_mask):
+            # 从概率最高的 bin 借 1 给零计数 bin
+            for zi in np.where(zero_mask)[0]:
+                donor = np.argmax(freqs)
+                if freqs[donor] > 1:
+                    freqs[donor] -= 1
+                    freqs[zi] += 1
         cdf = np.zeros(257, dtype=np.int32)
-        cdf[1:] = np.cumsum((probs * total_freq).astype(np.int32))
+        cdf[1:] = np.cumsum(freqs.astype(np.int32))
         cdf[-1] = total_freq
         return cdf
 
